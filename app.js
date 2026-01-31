@@ -45,6 +45,7 @@ const state = {
   adminLoggedIn: false,
   showAdminLogin: false,
   viewPassword: "",
+  selectedIds: new Set(),
 };
 
 function setState(next) {
@@ -227,11 +228,27 @@ function renderList() {
 
   for (const post of state.posts) {
     const item = h("div", { class: "list-item" }, [
+      isAdmin()
+        ? h("input", {
+            class: "list-item__check",
+            type: "checkbox",
+            "data-id": post.id,
+          })
+        : "",
       h("div", { class: "list-item__row" }, [
         h("div", { class: "list-item__title", text: post.title }),
         h("div", { class: "list-item__author", text: post.author }),
       ]),
     ]);
+    if (isAdmin()) {
+      const checkbox = item.querySelector(".list-item__check");
+      checkbox.checked = state.selectedIds.has(post.id);
+      checkbox.addEventListener("click", (e) => e.stopPropagation());
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) state.selectedIds.add(post.id);
+        else state.selectedIds.delete(post.id);
+      });
+    }
     item.addEventListener("click", () => {
       openPost(post.id).catch((err) => alert(err.message));
     });
@@ -241,9 +258,53 @@ function renderList() {
   return list;
 }
 
+function downloadCsv(filename, rows) {
+  const escapeCell = (value) => {
+    const text = String(value ?? "");
+    if (/[",\n\r]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+    return text;
+  };
+  const csv = rows.map((row) => row.map(escapeCell).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function exportSelectedPosts() {
+  if (!isAdmin()) return;
+  const ids = Array.from(state.selectedIds);
+  if (ids.length === 0) {
+    alert("내보낼 게시물을 선택해 주세요.");
+    return;
+  }
+  const rows = [["제목", "내용", "이름"]];
+  for (const id of ids) {
+    const data = await apiJson(`/api/posts/${id}`);
+    const post = data.post;
+    rows.push([post.title, post.content, post.author]);
+  }
+  downloadCsv(`woldecks-posts-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+}
+
 function renderListView() {
   return h("section", { class: "panel" }, [
-    h("h2", { class: "panel__title", text: "게시글 목록" }),
+    h("div", { class: "list-head" }, [
+      h("h2", { class: "panel__title", text: "게시글 목록" }),
+      isAdmin()
+        ? h("button", {
+            class: "btn btn--ghost",
+            type: "button",
+            text: "엑셀로 저장",
+            onClick: () => exportSelectedPosts().catch((err) => alert(err.message)),
+          })
+        : "",
+    ]),
     renderList(),
   ]);
 }

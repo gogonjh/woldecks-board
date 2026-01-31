@@ -300,6 +300,13 @@ textarea:focus {
   font-weight: 700;
 }
 
+.list-item__check {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-2);
+}
+
 .list-item__row {
   display: flex;
   align-items: center;
@@ -311,6 +318,13 @@ textarea:focus {
   color: var(--muted);
   font-size: 12px;
   white-space: nowrap;
+}
+
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .list-item__meta {
