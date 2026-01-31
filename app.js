@@ -53,6 +53,29 @@ function setState(next) {
   render();
 }
 
+function navigate(view, post = null, replace = false) {
+  const postId = typeof post === "string" ? post : post?.id || null;
+  const url =
+    view === "write"
+      ? "/write"
+      : view === "detail" && postId
+        ? `/post/${postId}`
+        : "/";
+  const historyState = { view, postId };
+  if (replace) history.replaceState(historyState, "", url);
+  else history.pushState(historyState, "", url);
+
+  setState({
+    view,
+    currentPost: typeof post === "object" && post ? post : state.currentPost,
+    editMode: false,
+  });
+}
+
+function goList(replace = true) {
+  navigate("list", null, replace);
+}
+
 function isAdmin() {
   return state.adminLoggedIn;
 }
@@ -70,7 +93,7 @@ async function refreshPosts() {
 async function openPost(id) {
   if (isAdmin()) {
     const data = await apiJson(`/api/posts/${id}`);
-    setState({ currentPost: data.post, view: "detail", editMode: false });
+    navigate("detail", data.post);
     return;
   }
   const password = prompt("게시글 비밀번호를 입력하세요.");
@@ -79,12 +102,8 @@ async function openPost(id) {
     method: "POST",
     body: JSON.stringify({ password }),
   });
-  setState({
-    currentPost: { ...data.post, viewToken: data.viewToken },
-    view: "detail",
-    editMode: false,
-    viewPassword: password,
-  });
+  setState({ viewPassword: password });
+  navigate("detail", { ...data.post, viewToken: data.viewToken });
 }
 
 async function createPost(form) {
@@ -106,7 +125,7 @@ async function createPost(form) {
 
   await refreshPosts();
   form.reset();
-  setState({ view: "list" });
+  goList(true);
 }
 
 async function updateCurrentPost(form) {
@@ -141,7 +160,6 @@ async function updateCurrentPost(form) {
   setState({
     currentPost: { ...post, title, content, updatedAt: new Date().toISOString() },
     editMode: false,
-    view: "detail",
   });
 }
 
@@ -168,7 +186,8 @@ async function deleteCurrentPost() {
   }
 
   await refreshPosts();
-  setState({ currentPost: null, view: "list", editMode: false, viewPassword: "" });
+  setState({ currentPost: null, editMode: false, viewPassword: "" });
+  goList(true);
 }
 
 function renderAdminModal() {
@@ -332,16 +351,16 @@ function renderWriteView() {
       h("label", { text: "내용" }),
       h("textarea", { name: "content", placeholder: "내용" }),
     ]),
-    h("div", { class: "btn-row" }, [
-      h("button", { class: "btn", type: "submit", text: "등록" }),
-      h("button", {
-        class: "btn btn--ghost",
-        type: "button",
-        text: "취소",
-        onClick: () => setState({ view: "list" }),
-      }),
-    ]),
-  ]);
+      h("div", { class: "btn-row" }, [
+        h("button", { class: "btn", type: "submit", text: "등록" }),
+        h("button", {
+          class: "btn btn--ghost",
+          type: "button",
+          text: "취소",
+          onClick: () => goList(true),
+        }),
+      ]),
+    ]);
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -358,7 +377,12 @@ function renderDetailView() {
       h("h2", { class: "panel__title", text: "게시글 상세" }),
       h("p", { class: "panel__text", text: "게시글을 선택해 주세요." }),
       h("div", { class: "btn-row" }, [
-        h("button", { class: "btn btn--ghost", type: "button", text: "목록", onClick: () => setState({ view: "list" }) }),
+        h("button", {
+          class: "btn btn--ghost",
+          type: "button",
+          text: "목록",
+          onClick: () => goList(true),
+        }),
       ]),
     ]);
   }
@@ -392,7 +416,12 @@ function renderDetailView() {
 
     return h("section", { class: "panel" }, [
       h("div", { class: "btn-row" }, [
-        h("button", { class: "btn btn--ghost", type: "button", text: "목록", onClick: () => setState({ view: "list", editMode: false }) }),
+        h("button", {
+          class: "btn btn--ghost",
+          type: "button",
+          text: "목록",
+          onClick: () => goList(true),
+        }),
       ]),
       editForm,
     ]);
@@ -409,7 +438,12 @@ function renderDetailView() {
       : "",
     h("div", { class: "detail__content", text: post.content }),
     h("div", { class: "btn-row" }, [
-      h("button", { class: "btn btn--ghost", type: "button", text: "목록", onClick: () => setState({ view: "list" }) }),
+      h("button", {
+        class: "btn btn--ghost",
+        type: "button",
+        text: "목록",
+      onClick: () => goList(true),
+      }),
       h("button", { class: "btn", type: "button", text: "수정", onClick: () => setState({ editMode: true }) }),
       h("button", {
         class: "btn btn--danger",
@@ -436,7 +470,8 @@ function render() {
           class: "btn fab",
           type: "button",
           text: state.view === "write" ? "목록으로" : "글쓰기",
-          onClick: () => setState({ view: state.view === "write" ? "list" : "write" }),
+          onClick: () =>
+            state.view === "write" ? goList(true) : navigate("write"),
         });
 
   app.replaceChildren(h("div", { class: "stack" }, [content, fab, renderAdminModal()]));
@@ -460,4 +495,37 @@ document.getElementById("adminButton").addEventListener("click", async () => {
 
 Promise.all([refreshAdmin(), refreshPosts()])
   .catch((err) => alert(err.message))
-  .finally(() => render());
+  .finally(() => {
+    if (!history.state) navigate("list", null, true);
+    render();
+  });
+
+window.addEventListener("popstate", async (event) => {
+  const st = event.state;
+  if (!st || !st.view) {
+    setState({ view: "list", currentPost: null, editMode: false });
+    return;
+  }
+  if (st.view === "detail" && st.postId) {
+    if (state.currentPost?.id === st.postId) {
+      setState({ view: "detail", editMode: false });
+      return;
+    }
+    if (isAdmin()) {
+      try {
+        const data = await apiJson(`/api/posts/${st.postId}`);
+        setState({ view: "detail", currentPost: data.post, editMode: false });
+      } catch {
+        setState({ view: "list", currentPost: null, editMode: false });
+      }
+      return;
+    }
+    setState({ view: "list", currentPost: null, editMode: false });
+    return;
+  }
+  if (st.view === "write") {
+    setState({ view: "write", currentPost: null, editMode: false });
+    return;
+  }
+  setState({ view: "list", currentPost: null, editMode: false });
+});
