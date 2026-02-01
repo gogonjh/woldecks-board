@@ -1,0 +1,10 @@
+name = "woldecks-board-api"
+main = "worker/index.js"
+compatibility_date = "2026-02-01"
+
+[vars]
+# SUPABASE_URL = "https://xxxx.supabase.co"
+# SUPABASE_SERVICE_ROLE_KEY = "service-role-key"
+# ADMIN_PASSWORD = "your-admin-password"
+# TOKEN_PEPPER = "random-long-secret"
+# ALLOWED_ORIGIN = "https://your-pages-domain"

@@ -1,4 +1,6 @@
 const app = document.getElementById("app");
+const API_BASE = (window.API_BASE || "").replace(/\/$/, "");
+const apiUrl = (path) => `${API_BASE}${path}`;
 
 function h(tag, props = {}, children = []) {
   const el = document.createElement(tag);
@@ -21,9 +23,9 @@ function formatDate(date) {
 }
 
 async function apiJson(url, options = {}) {
-  const res = await fetch(url, {
+  const res = await fetch(apiUrl(url), {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    credentials: "same-origin",
+    credentials: "include",
     ...options,
   });
 
