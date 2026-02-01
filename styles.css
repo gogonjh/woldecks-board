@@ -327,6 +327,20 @@ textarea:focus {
   gap: 12px;
 }
 
+.list-head__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.list-head__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .list-item__meta {
   color: var(--muted);
   font-size: 12px;

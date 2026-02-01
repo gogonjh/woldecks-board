@@ -311,10 +311,34 @@ async function exportSelectedPosts() {
   downloadCsv(`woldecks-posts-${new Date().toISOString().slice(0, 10)}.csv`, rows);
 }
 
+function toggleSelectAll(checked) {
+  if (checked) {
+    state.selectedIds = new Set(state.posts.map((p) => p.id));
+  } else {
+    state.selectedIds = new Set();
+  }
+  render();
+}
+
 function renderListView() {
+  const allChecked =
+    state.posts.length > 0 && state.posts.every((p) => state.selectedIds.has(p.id));
+
   return h("section", { class: "panel" }, [
     h("div", { class: "list-head" }, [
-      h("h2", { class: "panel__title", text: "게시글 목록" }),
+      h("div", { class: "list-head__left" }, [
+        h("h2", { class: "panel__title", text: "게시글 목록" }),
+        isAdmin()
+          ? h("label", { class: "list-head__check" }, [
+              h("input", {
+                type: "checkbox",
+                checked: allChecked ? "checked" : null,
+                onChange: (e) => toggleSelectAll(e.target.checked),
+              }),
+              h("span", { text: "전체 선택" }),
+            ])
+          : "",
+      ]),
       isAdmin()
         ? h("button", {
             class: "btn btn--ghost",
