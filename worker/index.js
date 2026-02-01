@@ -156,7 +156,10 @@ const getAllowedOrigin = (request, env) => {
   const origin = request.headers.get("Origin");
   if (!origin) return null;
   if (!env.ALLOWED_ORIGIN) return origin;
-  return origin === env.ALLOWED_ORIGIN ? origin : null;
+  const allowed = env.ALLOWED_ORIGIN.split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return allowed.includes(origin) ? origin : null;
 };
 
 const handleOptions = (request, env) => {
