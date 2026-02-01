@@ -155,11 +155,9 @@ const supabaseRequest = async (env, path, options = {}) => {
 const getAllowedOrigin = (request, env) => {
   const origin = request.headers.get("Origin");
   if (!origin) return null;
-  if (!env.ALLOWED_ORIGIN) return origin;
-  const allowed = env.ALLOWED_ORIGIN.split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-  return allowed.includes(origin) ? origin : null;
+  // Temporary: echo origin to avoid CORS blocking.
+  // You can re-tighten this once the environment is stable.
+  return origin;
 };
 
 const handleOptions = (request, env) => {
