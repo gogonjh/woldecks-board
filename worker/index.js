@@ -74,7 +74,7 @@ const pbkdf2Hash = async (password, saltHex, iterations, keylen, digest) => {
 const makePasswordRecord = async (password) => {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const saltHex = bytesToHex(salt);
-  const iterations = 120000;
+  const iterations = 100000;
   const keylen = 32;
   const digest = "SHA-256";
   const hashHex = await pbkdf2Hash(password, saltHex, iterations, keylen, digest);
