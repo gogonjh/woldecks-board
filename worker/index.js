@@ -233,7 +233,8 @@ export default {
         `woldecks.admin=${encodeURIComponent(`${tokenData.token}.${tokenData.salt}`)}`,
         "Path=/",
         "HttpOnly",
-        "SameSite=Lax",
+        "SameSite=None",
+        "Secure",
         "Max-Age=86400",
       ].join("; ");
 
@@ -263,7 +264,8 @@ export default {
         "woldecks.admin=x",
         "Path=/",
         "HttpOnly",
-        "SameSite=Lax",
+        "SameSite=None",
+        "Secure",
         "Max-Age=0",
       ].join("; ");
 
