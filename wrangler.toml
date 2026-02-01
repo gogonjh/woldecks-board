@@ -3,8 +3,5 @@ main = "worker/index.js"
 compatibility_date = "2026-02-01"
 
 [vars]
-# SUPABASE_URL = "https://xxxx.supabase.co"
-# SUPABASE_SERVICE_ROLE_KEY = "service-role-key"
-# ADMIN_PASSWORD = "your-admin-password"
-# TOKEN_PEPPER = "random-long-secret"
-# ALLOWED_ORIGIN = "https://your-pages-domain"
+SUPABASE_URL = "https://vkhigtmnmylooczzwzhl.supabase.co"
+ALLOWED_ORIGIN = "https://woldecks-board.pages.dev,https://84fb1e13.woldecks-board.pages.dev"
