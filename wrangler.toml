@@ -1,4 +1,4 @@
-name = "woldecks-board-api"
+name = "woldecks-board"
 main = "worker/index.js"
 compatibility_date = "2026-02-01"
 
