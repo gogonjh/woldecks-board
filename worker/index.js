@@ -202,6 +202,8 @@ export default {
     const send = (status, body, extraHeaders = {}) =>
       json(status, body, { ...extraHeaders, ...(origin ? corsHeaders(origin) : {}) });
 
+    try {
+
     if (path === "/api/admin/me" && request.method === "GET") {
       const admin = await isAdmin(request, env);
       return send(200, { admin });
@@ -274,7 +276,10 @@ export default {
         order: "created_at.desc",
       });
       const res = await supabaseRequest(env, `posts?${qs.toString()}`);
-      if (!res.ok) return send(500, { error: "Failed to load posts" });
+      if (!res.ok) {
+        const detail = await res.text();
+        return send(500, { error: "Failed to load posts", detail });
+      }
       const posts = await res.json();
       return send(200, {
         posts: posts.map((p) => ({
@@ -310,7 +315,10 @@ export default {
         headers: { "Content-Type": "application/json", Prefer: "return=representation" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) return send(500, { error: "Failed to create post" });
+      if (!res.ok) {
+        const detail = await res.text();
+        return send(500, { error: "Failed to create post", detail });
+      }
       const created = await res.json();
       return send(201, { id: created[0]?.id });
     }
@@ -325,7 +333,10 @@ export default {
         limit: "1",
       });
       const res = await supabaseRequest(env, `posts?${qs.toString()}`);
-      if (!res.ok) return send(500, { error: "Failed to load post" });
+      if (!res.ok) {
+        const detail = await res.text();
+        return send(500, { error: "Failed to load post", detail });
+      }
       const data = await res.json();
       if (data.length === 0) return send(404, { error: "Not found" });
       const post = data[0];
@@ -351,7 +362,10 @@ export default {
           limit: "1",
         });
         const res = await supabaseRequest(env, `posts?${qs.toString()}`);
-        if (!res.ok) return send(500, { error: "Failed to load post" });
+        if (!res.ok) {
+          const detail = await res.text();
+          return send(500, { error: "Failed to load post", detail });
+        }
         const data = await res.json();
         if (data.length === 0) return send(404, { error: "Not found" });
         const post = data[0];
@@ -378,7 +392,10 @@ export default {
         limit: "1",
       });
       const res = await supabaseRequest(env, `posts?${qs.toString()}`);
-      if (!res.ok) return send(500, { error: "Failed to load post" });
+      if (!res.ok) {
+        const detail = await res.text();
+        return send(500, { error: "Failed to load post", detail });
+      }
       const data = await res.json();
       if (data.length === 0) return send(404, { error: "Not found" });
       const post = data[0];
@@ -397,7 +414,10 @@ export default {
           expires_at: expiresAt,
         }),
       });
-      if (!insertRes.ok) return send(500, { error: "Failed to issue token" });
+      if (!insertRes.ok) {
+        const detail = await insertRes.text();
+        return send(500, { error: "Failed to issue token", detail });
+      }
 
       return send(200, {
         post: {
@@ -454,7 +474,10 @@ export default {
             limit: "1",
           });
           const res = await supabaseRequest(env, `posts?${qs.toString()}`);
-          if (!res.ok) return send(500, { error: "Failed to verify" });
+          if (!res.ok) {
+            const detail = await res.text();
+            return send(500, { error: "Failed to verify", detail });
+          }
           const data = await res.json();
           if (data.length === 0) return send(404, { error: "Not found" });
           const ok = await verifyPassword(password, data[0]);
@@ -467,7 +490,10 @@ export default {
         headers: { "Content-Type": "application/json", Prefer: "return=representation" },
         body: JSON.stringify({ title, content }),
       });
-      if (!updateRes.ok) return send(500, { error: "Failed to update" });
+      if (!updateRes.ok) {
+        const detail = await updateRes.text();
+        return send(500, { error: "Failed to update", detail });
+      }
       return send(200, { ok: true });
     }
 
@@ -510,7 +536,10 @@ export default {
             limit: "1",
           });
           const res = await supabaseRequest(env, `posts?${qs.toString()}`);
-          if (!res.ok) return send(500, { error: "Failed to verify" });
+          if (!res.ok) {
+            const detail = await res.text();
+            return send(500, { error: "Failed to verify", detail });
+          }
           const data = await res.json();
           if (data.length === 0) return send(404, { error: "Not found" });
           const ok = await verifyPassword(password, data[0]);
@@ -521,10 +550,16 @@ export default {
       const delRes = await supabaseRequest(env, `posts?id=eq.${id}`, {
         method: "DELETE",
       });
-      if (!delRes.ok) return send(500, { error: "Failed to delete" });
+      if (!delRes.ok) {
+        const detail = await delRes.text();
+        return send(500, { error: "Failed to delete", detail });
+      }
       return send(200, { ok: true });
     }
 
-    return send(404, { error: "Not found" });
+      return send(404, { error: "Not found" });
+    } catch (err) {
+      return send(500, { error: "Worker error", detail: String(err?.message || err) });
+    }
   },
 };
