@@ -313,6 +313,38 @@ async function exportSelectedPosts() {
   downloadCsv(`woldecks-posts-${new Date().toISOString().slice(0, 10)}.csv`, rows);
 }
 
+
+async function deleteSelectedPosts() {
+  if (!isAdmin()) return;
+  const ids = Array.from(state.selectedIds);
+  if (ids.length === 0) {
+    alert("No posts selected.");
+    return;
+  }
+  if (!confirm(`Delete ${ids.length} selected posts?`)) return;
+
+  const results = await Promise.allSettled(
+    ids.map((id) =>
+      apiJson(`/api/posts/${id}`, {
+        method: "DELETE",
+        body: JSON.stringify({}),
+      }),
+    ),
+  );
+  const failed = results.filter((r) => r.status === "rejected");
+  if (failed.length > 0) {
+    alert(`Delete failed: ${failed.length}`);
+  }
+
+  state.selectedIds = new Set();
+  await refreshPosts();
+  render();
+}
+
+
+
+
+
 function toggleSelectAll(checked) {
   if (checked) {
     state.selectedIds = new Set(state.posts.map((p) => p.id));
@@ -347,6 +379,15 @@ function renderListView() {
             type: "button",
             text: "엑셀로 저장",
             onClick: () => exportSelectedPosts().catch((err) => alert(err.message)),
+          })
+        : "",
+
+      isAdmin()
+        ? h("button", {
+            class: "btn btn--danger",
+            type: "button",
+            text: "Delete Selected",
+            onClick: () => deleteSelectedPosts().catch((err) => alert(err.message)),
           })
         : "",
     ]),
