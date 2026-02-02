@@ -126,15 +126,12 @@ async function updateCurrentPost(form) {
   const title = form.querySelector("[name=edit-title]").value.trim();
   const content = form.querySelector("[name=edit-content]").value.trim();
   if (!title || !content) {
-    alert("??? ??? ??? ???.");
+    alert("Please enter title and content.");
     return;
   }
 
-  let password = "";
-  if (!isAdmin()) {
-    password = prompt("?? ????? ?????.") || "";
-    if (!password) return;
-  }
+  const password = prompt("Enter password to edit this post.") || "";
+  if (!password) return;
 
   try {
     await apiJson(`/api/posts/${post.id}`, {
@@ -147,8 +144,8 @@ async function updateCurrentPost(form) {
       }),
     });
   } catch (err) {
-    if (!isAdmin() && /password/i.test(err.message)) {
-      alert("????? ???? ????.");
+    if (/password/i.test(err.message)) {
+      alert("Incorrect password.");
       return;
     }
     throw err;
@@ -165,13 +162,10 @@ async function deleteCurrentPost() {
   const post = state.currentPost;
   if (!post) return;
 
-  if (!confirm("?? ??????")) return;
+  if (!confirm("Delete this post?")) return;
 
-  let password = "";
-  if (!isAdmin()) {
-    password = prompt("?? ????? ?????.") || "";
-    if (!password) return;
-  }
+  const password = prompt("Enter password to delete this post.") || "";
+  if (!password) return;
 
   try {
     await apiJson(`/api/posts/${post.id}`, {
@@ -182,8 +176,8 @@ async function deleteCurrentPost() {
       }),
     });
   } catch (err) {
-    if (!isAdmin() && /password/i.test(err.message)) {
-      alert("????? ???? ????.");
+    if (/password/i.test(err.message)) {
+      alert("Incorrect password.");
       return;
     }
     throw err;
