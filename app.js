@@ -93,19 +93,8 @@ async function refreshPosts() {
 }
 
 async function openPost(id) {
-  if (isAdmin()) {
-    const data = await apiJson(`/api/posts/${id}`);
-    navigate("detail", data.post);
-    return;
-  }
-  const password = prompt("게시글 비밀번호를 입력하세요.");
-  if (password === null) return;
-  const data = await apiJson(`/api/posts/${id}/view`, {
-    method: "POST",
-    body: JSON.stringify({ password }),
-  });
-  setState({ viewPassword: password });
-  navigate("detail", { ...data.post, viewToken: data.viewToken });
+  const data = await apiJson(`/api/posts/${id}`);
+  navigate("detail", data.post);
 }
 
 async function createPost(form) {
@@ -578,16 +567,12 @@ window.addEventListener("popstate", async (event) => {
       setState({ view: "detail", editMode: false });
       return;
     }
-    if (isAdmin()) {
-      try {
-        const data = await apiJson(`/api/posts/${st.postId}`);
-        setState({ view: "detail", currentPost: data.post, editMode: false });
-      } catch {
-        setState({ view: "list", currentPost: null, editMode: false });
-      }
-      return;
+    try {
+      const data = await apiJson(`/api/posts/${st.postId}`);
+      setState({ view: "detail", currentPost: data.post, editMode: false });
+    } catch {
+      setState({ view: "list", currentPost: null, editMode: false });
     }
-    setState({ view: "list", currentPost: null, editMode: false });
     return;
   }
   if (st.view === "write") {

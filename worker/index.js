@@ -327,7 +327,6 @@ export default {
 
     const postMatch = path.match(/^\/api\/posts\/([^/]+)$/);
     if (postMatch && request.method === "GET") {
-      if (!(await isAdmin(request, env))) return send(401, { error: "Admin only" });
       const id = postMatch[1];
       const qs = new URLSearchParams({
         select: "id,title,author,content,created_at,updated_at",
