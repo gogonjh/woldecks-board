@@ -130,8 +130,12 @@ async function updateCurrentPost(form) {
     return;
   }
 
-  const password = prompt("Enter password to edit this post.") || "";
-  if (!password) return;
+  const password = state.viewPassword || "";
+  if (!isAdmin() && !password) {
+    alert("Please verify password first.");
+    setState({ editMode: false });
+    return;
+  }
 
   try {
     await apiJson(`/api/posts/${post.id}`, {
@@ -156,6 +160,34 @@ async function updateCurrentPost(form) {
     currentPost: { ...post, title, content, updatedAt: new Date().toISOString() },
     editMode: false,
   });
+}
+
+async function requestEditMode() {
+  const post = state.currentPost;
+  if (!post) return;
+  if (isAdmin()) {
+    setState({ editMode: true });
+    return;
+  }
+  const password = prompt("Enter password to edit this post.") || "";
+  if (!password) return;
+  try {
+    const data = await apiJson(`/api/posts/${post.id}/view`, {
+      method: "POST",
+      body: JSON.stringify({ password }),
+    });
+    setState({
+      currentPost: { ...post, viewToken: data.viewToken || "" },
+      viewPassword: password,
+      editMode: true,
+    });
+  } catch (err) {
+    if (/password/i.test(err.message)) {
+      alert("Incorrect password.");
+      return;
+    }
+    throw err;
+  }
 }
 
 async function deleteCurrentPost() {
@@ -407,7 +439,7 @@ function renderWriteView() {
       h("input", { name: "author", placeholder: "이름" }),
     ]),
     h("div", { class: "field" }, [
-      h("label", { text: "게시글 비밀번호(그대로 표시됨)" }),
+      h("label", { text: "??? ????" }),
       h("input", { name: "password", type: "text", placeholder: "비밀번호" }),
     ]),
     h("div", { class: "field" }, [
@@ -507,7 +539,7 @@ function renderDetailView() {
         text: "목록",
       onClick: () => goList(true),
       }),
-      h("button", { class: "btn", type: "button", text: "수정", onClick: () => setState({ editMode: true }) }),
+      h("button", { class: "btn", type: "button", text: "수정", onClick: () => requestEditMode() }),
       h("button", {
         class: "btn btn--danger",
         type: "button",
