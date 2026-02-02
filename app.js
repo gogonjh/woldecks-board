@@ -439,7 +439,7 @@ function renderWriteView() {
       h("input", { name: "author", placeholder: "이름" }),
     ]),
     h("div", { class: "field" }, [
-      h("label", { text: "??? ????" }),
+      h("label", { text: "Password" }),
       h("input", { name: "password", type: "text", placeholder: "비밀번호" }),
     ]),
     h("div", { class: "field" }, [
