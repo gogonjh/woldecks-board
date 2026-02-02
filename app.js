@@ -126,9 +126,16 @@ async function updateCurrentPost(form) {
   const title = form.querySelector("[name=edit-title]").value.trim();
   const content = form.querySelector("[name=edit-content]").value.trim();
   if (!title || !content) {
-    alert("제목과 내용을 입력해 주세요.");
+    alert("??? ??? ??? ???.");
     return;
   }
+
+  let password = "";
+  if (!isAdmin()) {
+    password = prompt("?? ????? ?????.") || "";
+    if (!password) return;
+  }
+
   try {
     await apiJson(`/api/posts/${post.id}`, {
       method: "PUT",
@@ -136,12 +143,12 @@ async function updateCurrentPost(form) {
         title,
         content,
         viewToken: post.viewToken || "",
-        password: state.viewPassword || "",
+        password,
       }),
     });
   } catch (err) {
     if (!isAdmin() && /password/i.test(err.message)) {
-      setState({ view: "list", editMode: false, currentPost: null });
+      alert("????? ???? ????.");
       return;
     }
     throw err;
@@ -158,19 +165,25 @@ async function deleteCurrentPost() {
   const post = state.currentPost;
   if (!post) return;
 
-  if (!confirm("정말 삭제할까요?")) return;
+  if (!confirm("?? ??????")) return;
+
+  let password = "";
+  if (!isAdmin()) {
+    password = prompt("?? ????? ?????.") || "";
+    if (!password) return;
+  }
 
   try {
     await apiJson(`/api/posts/${post.id}`, {
       method: "DELETE",
       body: JSON.stringify({
         viewToken: post.viewToken || "",
-        password: state.viewPassword || "",
+        password,
       }),
     });
   } catch (err) {
     if (!isAdmin() && /password/i.test(err.message)) {
-      setState({ view: "list", editMode: false, currentPost: null });
+      alert("????? ???? ????.");
       return;
     }
     throw err;
