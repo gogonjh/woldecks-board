@@ -44,6 +44,7 @@ const state = {
   currentPost: null,
   comments: [],
   commentsError: "",
+  showCommentForm: false,
   view: "list", // list | write | detail
   editMode: false,
   adminLoggedIn: false,
@@ -73,6 +74,7 @@ function navigate(view, post = null, replace = false) {
     view,
     currentPost: typeof post === "object" && post ? post : state.currentPost,
     editMode: false,
+    showCommentForm: false,
   });
 }
 
@@ -110,7 +112,7 @@ async function refreshComments(postId) {
 async function openPost(id) {
   const data = await apiJson(`/api/posts/${id}`);
   navigate("detail", data.post);
-  setState({ comments: [] });
+  setState({ comments: [], showCommentForm: false });
   await refreshComments(id);
 }
 
@@ -246,13 +248,18 @@ async function createComment(form) {
     alert("이름과 댓글을 입력해 주세요.");
     return;
   }
-  await apiJson(`/api/posts/${post.id}/comments`, {
-    method: "POST",
-    body: JSON.stringify({ author, content }),
-  });
-  form.reset();
-  await refreshComments(post.id);
-  await refreshPosts();
+  try {
+    await apiJson(`/api/posts/${post.id}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ author, content }),
+    });
+    form.reset();
+    await refreshComments(post.id);
+    await refreshPosts();
+    setState({ showCommentForm: false });
+  } catch {
+    alert("댓글 등록에 실패했습니다.");
+  }
 }
 
 function renderAdminModal() {
@@ -574,6 +581,12 @@ function renderDetailView() {
     ]),
     h("div", { class: "btn-row" }, [
       h("button", { class: "btn", type: "submit", text: "등록" }),
+      h("button", {
+        class: "btn btn--ghost",
+        type: "button",
+        text: "취소",
+        onClick: () => setState({ showCommentForm: false }),
+      }),
     ]),
   ]);
 
@@ -601,6 +614,15 @@ function renderDetailView() {
         );
 
 
+  const commentToggle = h("div", { class: "btn-row" }, [
+    h("button", {
+      class: "btn",
+      type: "button",
+      text: state.showCommentForm ? "댓글 숨기기" : "댓글 작성",
+      onClick: () => setState({ showCommentForm: !state.showCommentForm }),
+    }),
+  ]);
+
   return h("section", { class: "panel" }, [
     h("h1", { class: "title", text: post.title }),
     h("p", {
@@ -626,7 +648,8 @@ function renderDetailView() {
         onClick: () => deleteCurrentPost().catch(() => alert("삭제에 실패했습니다.")),
       }),
     ]),
-    commentForm,
+    commentToggle,
+    state.showCommentForm ? commentForm : "",
     commentList,
   ]);
 }
@@ -689,7 +712,7 @@ window.addEventListener("popstate", async (event) => {
     }
     try {
       const data = await apiJson(`/api/posts/${st.postId}`);
-      setState({ comments: [] });
+      setState({ comments: [], showCommentForm: false });
       await refreshComments(st.postId);
       setState({ view: "detail", currentPost: data.post, editMode: false });
     } catch {
