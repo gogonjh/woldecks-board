@@ -275,7 +275,7 @@ export default {
     if (path === "/api/posts" && request.method === "GET") {
       const pageParam = Number.parseInt(url.searchParams.get("page") || "1", 10);
       const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
-      const pageSize = 50;
+      const pageSize = 20;
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 

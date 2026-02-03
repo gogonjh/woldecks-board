@@ -47,7 +47,7 @@ const state = {
   showCommentForm: false,
   commentDraft: { author: "", content: "" },
   page: 1,
-  pageSize: 50,
+  pageSize: 20,
   total: 0,
   view: "list", // list | write | detail
   editMode: false,
