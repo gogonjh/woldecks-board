@@ -42,6 +42,7 @@ async function apiJson(url, options = {}) {
 const state = {
   posts: [],
   currentPost: null,
+  comments: [],
   view: "list", // list | write | detail
   editMode: false,
   adminLoggedIn: false,
@@ -92,8 +93,15 @@ async function refreshPosts() {
   setState({ posts: data.posts || [] });
 }
 
+async function refreshComments(postId) {
+  const data = await apiJson(`/api/posts/${postId}/comments`);
+  setState({ comments: data.comments || [] });
+}
+
 async function openPost(id) {
   const data = await apiJson(`/api/posts/${id}`);
+  setState({ comments: [] });
+  await refreshComments(id);
   navigate("detail", data.post);
 }
 
@@ -220,6 +228,24 @@ async function deleteCurrentPost() {
   goList(true);
 }
 
+async function createComment(form) {
+  const post = state.currentPost;
+  if (!post) return;
+  const author = form.querySelector("[name=comment-author]").value.trim();
+  const content = form.querySelector("[name=comment-content]").value.trim();
+  if (!author || !content) {
+    alert("Please enter name and comment.");
+    return;
+  }
+  await apiJson(`/api/posts/${post.id}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ author, content }),
+  });
+  form.reset();
+  await refreshComments(post.id);
+  await refreshPosts();
+}
+
 function renderAdminModal() {
   if (!state.showAdminLogin) return "";
 
@@ -276,6 +302,10 @@ function renderList() {
   }
 
   for (const post of state.posts) {
+    const commentSuffix =
+      typeof post.commentCount === "number" && post.commentCount > 0
+        ? ` (${post.commentCount})`
+        : "";
     const item = h("div", { class: "list-item" }, [
       isAdmin()
         ? h("input", {
@@ -285,7 +315,7 @@ function renderList() {
           })
         : "",
       h("div", { class: "list-item__row" }, [
-        h("div", { class: "list-item__title", text: post.title }),
+        h("div", { class: "list-item__title", text: post.title + commentSuffix }),
         h("div", { class: "list-item__author", text: post.author }),
       ]),
     ]);
@@ -440,7 +470,7 @@ function renderWriteView() {
     ]),
     h("div", { class: "field" }, [
       h("label", { text: "Password" }),
-      h("input", { name: "password", type: "text", placeholder: "비밀번호" }),
+      h("input", { name: "password", type: "text", placeholder: "Password" }),
     ]),
     h("div", { class: "field" }, [
       h("label", { text: "내용" }),
@@ -522,6 +552,45 @@ function renderDetailView() {
     ]);
   }
 
+
+  const commentForm = h("form", {}, [
+    h("h3", { class: "panel__title", text: "Comments" }),
+    h("div", { class: "field" }, [
+      h("label", { text: "Name" }),
+      h("input", { name: "comment-author", placeholder: "Name" }),
+    ]),
+    h("div", { class: "field" }, [
+      h("label", { text: "Comment" }),
+      h("textarea", { name: "comment-content", placeholder: "Comment" }),
+    ]),
+    h("div", { class: "btn-row" }, [
+      h("button", { class: "btn", type: "submit", text: "Add" }),
+    ]),
+  ]);
+
+  commentForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    createComment(commentForm).catch((err) => alert(err.message));
+  });
+
+  const commentList =
+    state.comments.length === 0
+      ? h("p", { class: "panel__text", text: "No comments yet." })
+      : h(
+          "div",
+          { class: "list" },
+          state.comments.map((c) =>
+            h("div", { class: "list-item" }, [
+              h("div", { class: "list-item__row" }, [
+                h("div", { class: "list-item__title", text: c.author }),
+                h("div", { class: "list-item__author", text: formatDate(c.createdAt) }),
+              ]),
+              h("div", { class: "detail__content", text: c.content }),
+            ]),
+          ),
+        );
+
+
   return h("section", { class: "panel" }, [
     h("h1", { class: "title", text: post.title }),
     h("p", {
@@ -547,6 +616,8 @@ function renderDetailView() {
         onClick: () => deleteCurrentPost().catch((err) => alert(err.message)),
       }),
     ]),
+    commentForm,
+    commentList,
   ]);
 }
 
@@ -608,6 +679,8 @@ window.addEventListener("popstate", async (event) => {
     }
     try {
       const data = await apiJson(`/api/posts/${st.postId}`);
+      setState({ comments: [] });
+      await refreshComments(st.postId);
       setState({ view: "detail", currentPost: data.post, editMode: false });
     } catch {
       setState({ view: "list", currentPost: null, editMode: false });

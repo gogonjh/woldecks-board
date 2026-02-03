@@ -283,6 +283,19 @@ export default {
         return send(500, { error: "Failed to load posts", detail });
       }
       const posts = await res.json();
+      let commentCounts = new Map();
+      if (posts.length > 0) {
+        const ids = posts.map((p) => p.id).join(",");
+        const cqs = new URLSearchParams({
+          select: "post_id,count:count(post_id)",
+          post_id: `in.(${ids})`,
+        });
+        const cres = await supabaseRequest(env, `comments?${cqs.toString()}`);
+        if (cres.ok) {
+          const rows = await cres.json();
+          commentCounts = new Map(rows.map((r) => [r.post_id, r.count || 0]));
+        }
+      }
       return send(200, {
         posts: posts.map((p) => ({
           id: p.id,
@@ -290,6 +303,7 @@ export default {
           author: p.author,
           createdAt: p.created_at,
           updatedAt: p.updated_at,
+          commentCount: commentCounts.get(p.id) || 0,
         })),
       });
     }
@@ -350,6 +364,52 @@ export default {
           createdAt: post.created_at,
           updatedAt: post.updated_at,
         },
+      });
+    }
+
+    const commentsMatch = path.match(/^\/api\/posts\/([^/]+)\/comments$/);
+    if (commentsMatch && request.method === "GET") {
+      const id = commentsMatch[1];
+      const qs = new URLSearchParams({
+        select: "id,author,content,created_at",
+        post_id: `eq.${id}`,
+        order: "created_at.asc",
+      });
+      const res = await supabaseRequest(env, `comments?${qs.toString()}`);
+      if (!res.ok) {
+        const detail = await res.text();
+        return send(500, { error: "Failed to load comments", detail });
+      }
+      const comments = await res.json();
+      return send(200, {
+        comments: comments.map((c) => ({
+          id: c.id,
+          author: c.author,
+          content: c.content,
+          createdAt: c.created_at,
+        })),
+      });
+    }
+
+    if (commentsMatch && request.method === "POST") {
+      const id = commentsMatch[1];
+      const body = await readJson(request);
+      if (!body) return send(400, { error: "Invalid JSON" });
+      const author = typeof body.author === "string" ? body.author.trim() : "";
+      const content = typeof body.content === "string" ? body.content.trim() : "";
+      if (!author || !content) return send(400, { error: "Missing fields" });
+      const res = await supabaseRequest(env, "comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Prefer: "return=representation" },
+        body: JSON.stringify({ post_id: id, author, content }),
+      });
+      if (!res.ok) {
+        const detail = await res.text();
+        return send(500, { error: "Failed to create comment", detail });
+      }
+      const created = await res.json();
+      return send(201, {
+        id: created[0]?.id,
       });
     }
 

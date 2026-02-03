@@ -17,6 +17,17 @@ create table if not exists public.posts (
 
 create index if not exists posts_created_at_idx on public.posts (created_at desc);
 
+create table if not exists public.comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references public.posts(id) on delete cascade,
+  author text not null,
+  content text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists comments_post_id_idx on public.comments (post_id);
+create index if not exists comments_created_at_idx on public.comments (created_at desc);
+
 create table if not exists public.view_tokens (
   id uuid primary key default gen_random_uuid(),
   post_id uuid not null references public.posts(id) on delete cascade,
@@ -53,5 +64,6 @@ before update on public.posts
 for each row execute function public.set_updated_at();
 
 alter table public.posts enable row level security;
+alter table public.comments enable row level security;
 alter table public.view_tokens enable row level security;
 alter table public.admin_sessions enable row level security;
