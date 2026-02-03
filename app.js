@@ -102,7 +102,7 @@ async function refreshComments(postId) {
   } catch (err) {
     setState({
       comments: [],
-      commentsError: err?.message || "Failed to load comments.",
+      commentsError: "댓글을 불러오지 못했습니다.",
     });
   }
 }
@@ -143,13 +143,13 @@ async function updateCurrentPost(form) {
   const title = form.querySelector("[name=edit-title]").value.trim();
   const content = form.querySelector("[name=edit-content]").value.trim();
   if (!title || !content) {
-    alert("Please enter title and content.");
+    alert("제목과 내용을 입력해 주세요.");
     return;
   }
 
   const password = state.viewPassword || "";
   if (!isAdmin() && !password) {
-    alert("Please verify password first.");
+    alert("먼저 비밀번호를 확인해 주세요.");
     setState({ editMode: false });
     return;
   }
@@ -166,7 +166,7 @@ async function updateCurrentPost(form) {
     });
   } catch (err) {
     if (/password/i.test(err.message)) {
-      alert("Incorrect password.");
+      alert("비밀번호가 올바르지 않습니다.");
       return;
     }
     throw err;
@@ -186,7 +186,7 @@ async function requestEditMode() {
     setState({ editMode: true });
     return;
   }
-  const password = prompt("Enter password to edit this post.") || "";
+  const password = prompt("게시글을 수정하려면 비밀번호를 입력하세요.") || "";
   if (!password) return;
   try {
     const data = await apiJson(`/api/posts/${post.id}/view`, {
@@ -200,7 +200,7 @@ async function requestEditMode() {
     });
   } catch (err) {
     if (/password/i.test(err.message)) {
-      alert("Incorrect password.");
+      alert("비밀번호가 올바르지 않습니다.");
       return;
     }
     throw err;
@@ -211,9 +211,9 @@ async function deleteCurrentPost() {
   const post = state.currentPost;
   if (!post) return;
 
-  if (!confirm("Delete this post?")) return;
+  if (!confirm("이 게시글을 삭제할까요?")) return;
 
-  const password = prompt("Enter password to delete this post.") || "";
+  const password = prompt("삭제하려면 비밀번호를 입력하세요.") || "";
   if (!password) return;
 
   try {
@@ -226,7 +226,7 @@ async function deleteCurrentPost() {
     });
   } catch (err) {
     if (/password/i.test(err.message)) {
-      alert("Incorrect password.");
+      alert("비밀번호가 올바르지 않습니다.");
       return;
     }
     throw err;
@@ -243,7 +243,7 @@ async function createComment(form) {
   const author = form.querySelector("[name=comment-author]").value.trim();
   const content = form.querySelector("[name=comment-content]").value.trim();
   if (!author || !content) {
-    alert("Please enter name and comment.");
+    alert("이름과 댓글을 입력해 주세요.");
     return;
   }
   await apiJson(`/api/posts/${post.id}/comments`, {
@@ -291,8 +291,8 @@ function renderAdminModal() {
       });
       await refreshAdmin();
       setState({ showAdminLogin: false });
-    } catch (err) {
-      alert(err.message);
+    } catch {
+      alert("로그인에 실패했습니다.");
     }
   });
 
@@ -338,7 +338,7 @@ function renderList() {
       });
     }
     item.addEventListener("click", () => {
-      openPost(post.id).catch((err) => alert(err.message));
+      openPost(post.id).catch(() => alert("게시글을 불러오지 못했습니다."));
     });
     list.append(item);
   }
@@ -371,7 +371,7 @@ async function exportSelectedPosts() {
     alert("내보낼 게시물을 선택해 주세요.");
     return;
   }
-  const rows = [["제목", "내용", "이름"]];
+  const rows = [["제목", "내용", "작성자"]];
   for (const id of ids) {
     const data = await apiJson(`/api/posts/${id}`);
     const post = data.post;
@@ -385,10 +385,10 @@ async function deleteSelectedPosts() {
   if (!isAdmin()) return;
   const ids = Array.from(state.selectedIds);
   if (ids.length === 0) {
-    alert("No posts selected.");
+    alert("선택된 게시물이 없습니다.");
     return;
   }
-  if (!confirm(`Delete ${ids.length} selected posts?`)) return;
+  if (!confirm(`선택한 게시물 ${ids.length}개를 삭제할까요?`)) return;
 
   const results = await Promise.allSettled(
     ids.map((id) =>
@@ -400,7 +400,7 @@ async function deleteSelectedPosts() {
   );
   const failed = results.filter((r) => r.status === "rejected");
   if (failed.length > 0) {
-    alert(`Delete failed: ${failed.length}`);
+    alert(`삭제 실패: ${failed.length}건`);
   }
 
   state.selectedIds = new Set();
@@ -444,8 +444,8 @@ function renderListView() {
         ? h("button", {
             class: "btn btn--ghost",
             type: "button",
-            text: "엑셀로 저장",
-            onClick: () => exportSelectedPosts().catch((err) => alert(err.message)),
+            text: "CSV 내보내기",
+            onClick: () => exportSelectedPosts().catch(() => alert("내보내기에 실패했습니다.")),
           })
         : "",
 
@@ -453,8 +453,8 @@ function renderListView() {
         ? h("button", {
             class: "btn btn--danger",
             type: "button",
-            text: "Delete Selected",
-            onClick: () => deleteSelectedPosts().catch((err) => alert(err.message)),
+            text: "선택 삭제",
+            onClick: () => deleteSelectedPosts().catch(() => alert("삭제에 실패했습니다.")),
           })
         : "",
     ]),
@@ -478,8 +478,8 @@ function renderWriteView() {
       h("input", { name: "author", placeholder: "이름" }),
     ]),
     h("div", { class: "field" }, [
-      h("label", { text: "Password" }),
-      h("input", { name: "password", type: "text", placeholder: "Password" }),
+      h("label", { text: "비밀번호" }),
+      h("input", { name: "password", type: "password", placeholder: "비밀번호" }),
     ]),
     h("div", { class: "field" }, [
       h("label", { text: "내용" }),
@@ -498,7 +498,7 @@ function renderWriteView() {
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    createPost(form).catch((err) => alert(err.message));
+    createPost(form).catch(() => alert("등록에 실패했습니다."));
   });
 
   return h("section", { class: "panel" }, [form]);
@@ -545,7 +545,7 @@ function renderDetailView() {
 
     editForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      updateCurrentPost(editForm).catch((err) => alert(err.message));
+      updateCurrentPost(editForm).catch(() => alert("수정에 실패했습니다."));
     });
 
     return h("section", { class: "panel" }, [
@@ -563,29 +563,29 @@ function renderDetailView() {
 
 
   const commentForm = h("form", {}, [
-    h("h3", { class: "panel__title", text: "Comments" }),
+    h("h3", { class: "panel__title", text: "댓글" }),
     h("div", { class: "field" }, [
-      h("label", { text: "Name" }),
-      h("input", { name: "comment-author", placeholder: "Name" }),
+      h("label", { text: "이름" }),
+      h("input", { name: "comment-author", placeholder: "이름" }),
     ]),
     h("div", { class: "field" }, [
-      h("label", { text: "Comment" }),
-      h("textarea", { name: "comment-content", placeholder: "Comment" }),
+      h("label", { text: "댓글" }),
+      h("textarea", { name: "comment-content", placeholder: "댓글" }),
     ]),
     h("div", { class: "btn-row" }, [
-      h("button", { class: "btn", type: "submit", text: "Add" }),
+      h("button", { class: "btn", type: "submit", text: "등록" }),
     ]),
   ]);
 
   commentForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    createComment(commentForm).catch((err) => alert(err.message));
+    createComment(commentForm).catch(() => alert("댓글 등록에 실패했습니다."));
   });
 
   const commentList = state.commentsError
     ? h("p", { class: "panel__text", text: state.commentsError })
     : state.comments.length === 0
-      ? h("p", { class: "panel__text", text: "No comments yet." })
+      ? h("p", { class: "panel__text", text: "댓글이 없습니다." })
       : h(
           "div",
           { class: "list" },
@@ -623,7 +623,7 @@ function renderDetailView() {
         class: "btn btn--danger",
         type: "button",
         text: "삭제",
-        onClick: () => deleteCurrentPost().catch((err) => alert(err.message)),
+        onClick: () => deleteCurrentPost().catch(() => alert("삭제에 실패했습니다.")),
       }),
     ]),
     commentForm,
@@ -664,13 +664,13 @@ document.getElementById("adminButton").addEventListener("click", async () => {
       return;
     }
     setState({ showAdminLogin: true });
-  } catch (err) {
-    alert(err.message);
+  } catch {
+    alert("요청에 실패했습니다.");
   }
 });
 
 Promise.all([refreshAdmin(), refreshPosts()])
-  .catch((err) => alert(err.message))
+  .catch(() => alert("데이터를 불러오지 못했습니다."))
   .finally(() => {
     if (!history.state) navigate("list", null, true);
     render();
