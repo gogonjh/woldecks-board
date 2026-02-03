@@ -46,6 +46,9 @@ const state = {
   commentsError: "",
   showCommentForm: false,
   commentDraft: { author: "", content: "" },
+  page: 1,
+  pageSize: 50,
+  total: 0,
   view: "list", // list | write | detail
   editMode: false,
   adminLoggedIn: false,
@@ -81,6 +84,8 @@ function navigate(view, post = null, replace = false) {
 }
 
 function goList(replace = true) {
+  setState({ page: 1 });
+  refreshPosts().catch(() => alert("게시글을 불러오지 못했습니다."));
   navigate("list", null, replace);
 }
 
@@ -94,8 +99,12 @@ async function refreshAdmin() {
 }
 
 async function refreshPosts() {
-  const data = await apiJson("/api/posts");
-  setState({ posts: data.posts || [] });
+  const data = await apiJson(`/api/posts?page=${state.page}`);
+  setState({
+    posts: data.posts || [],
+    total: Number.isFinite(data.total) ? data.total : 0,
+    pageSize: Number.isFinite(data.pageSize) ? data.pageSize : state.pageSize,
+  });
 }
 
 async function refreshComments(postId) {
@@ -456,6 +465,7 @@ function toggleSelectAll(checked) {
 function renderListView() {
   const allChecked =
     state.posts.length > 0 && state.posts.every((p) => state.selectedIds.has(p.id));
+  const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
 
   return h("section", { class: "panel" }, [
     h("div", { class: "list-head" }, [
@@ -491,6 +501,31 @@ function renderListView() {
         : "",
     ]),
     renderList(),
+    h("div", { class: "btn-row" }, [
+      h("button", {
+        class: "btn btn--ghost",
+        type: "button",
+        text: "이전",
+        disabled: state.page <= 1 ? "disabled" : null,
+        onClick: () => {
+          if (state.page <= 1) return;
+          setState({ page: state.page - 1 });
+          refreshPosts().catch(() => alert("게시글을 불러오지 못했습니다."));
+        },
+      }),
+      h("span", { text: `${state.page} / ${totalPages}` }),
+      h("button", {
+        class: "btn btn--ghost",
+        type: "button",
+        text: "다음",
+        disabled: state.page >= totalPages ? "disabled" : null,
+        onClick: () => {
+          if (state.page >= totalPages) return;
+          setState({ page: state.page + 1 });
+          refreshPosts().catch(() => alert("게시글을 불러오지 못했습니다."));
+        },
+      }),
+    ]),
   ]);
 }
 

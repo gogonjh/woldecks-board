@@ -273,16 +273,29 @@ export default {
     }
 
     if (path === "/api/posts" && request.method === "GET") {
+      const pageParam = Number.parseInt(url.searchParams.get("page") || "1", 10);
+      const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+      const pageSize = 50;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
       const qs = new URLSearchParams({
         select: "id,title,author,created_at,updated_at",
         order: "created_at.desc",
+        limit: String(pageSize),
+        offset: String(from),
       });
-      const res = await supabaseRequest(env, `posts?${qs.toString()}`);
+      const res = await supabaseRequest(env, `posts?${qs.toString()}`, {
+        headers: { Prefer: "count=exact" },
+      });
       if (!res.ok) {
         const detail = await res.text();
         return send(500, { error: "Failed to load posts", detail });
       }
       const posts = await res.json();
+      const total =
+        Number.parseInt((res.headers.get("content-range") || "").split("/")[1] || "0", 10) ||
+        posts.length;
       let commentCounts = new Map();
       if (posts.length > 0) {
         const ids = posts.map((p) => p.id).join(",");
@@ -305,6 +318,9 @@ export default {
           updatedAt: p.updated_at,
           commentCount: commentCounts.get(p.id) || 0,
         })),
+        page,
+        pageSize,
+        total,
       });
     }
 
