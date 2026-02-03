@@ -367,6 +367,25 @@ export default {
       });
     }
 
+    const commentDeleteMatch = path.match(/^\/api\/posts\/([^/]+)\/comments\/([^/]+)$/);
+    if (commentDeleteMatch && request.method === "DELETE") {
+      const postId = commentDeleteMatch[1];
+      const commentId = commentDeleteMatch[2];
+      if (!(await isAdmin(request, env))) {
+        return send(401, { error: "Unauthorized" });
+      }
+      const res = await supabaseRequest(
+        env,
+        `comments?id=eq.${commentId}&post_id=eq.${postId}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const detail = await res.text();
+        return send(500, { error: "Failed to delete comment", detail });
+      }
+      return send(200, { ok: true });
+    }
+
     const commentsMatch = path.match(/^\/api\/posts\/([^/]+)\/comments$/);
     if (commentsMatch && request.method === "GET") {
       const id = commentsMatch[1];

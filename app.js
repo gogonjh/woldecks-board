@@ -45,6 +45,7 @@ const state = {
   comments: [],
   commentsError: "",
   showCommentForm: false,
+  commentDraft: { author: "", content: "" },
   view: "list", // list | write | detail
   editMode: false,
   adminLoggedIn: false,
@@ -75,6 +76,7 @@ function navigate(view, post = null, replace = false) {
     currentPost: typeof post === "object" && post ? post : state.currentPost,
     editMode: false,
     showCommentForm: false,
+    commentDraft: { author: "", content: "" },
   });
 }
 
@@ -112,7 +114,7 @@ async function refreshComments(postId) {
 async function openPost(id) {
   const data = await apiJson(`/api/posts/${id}`);
   navigate("detail", data.post);
-  setState({ comments: [], showCommentForm: false });
+  setState({ comments: [], showCommentForm: false, commentDraft: { author: "", content: "" } });
   await refreshComments(id);
 }
 
@@ -215,23 +217,30 @@ async function deleteCurrentPost() {
 
   if (!confirm("이 게시글을 삭제할까요?")) return;
 
-  const password = prompt("삭제하려면 비밀번호를 입력하세요.") || "";
-  if (!password) return;
-
-  try {
+  if (isAdmin()) {
     await apiJson(`/api/posts/${post.id}`, {
       method: "DELETE",
-      body: JSON.stringify({
-        viewToken: post.viewToken || "",
-        password,
-      }),
+      body: JSON.stringify({}),
     });
-  } catch (err) {
-    if (/password/i.test(err.message)) {
-      alert("비밀번호가 올바르지 않습니다.");
-      return;
+  } else {
+    const password = prompt("삭제하려면 비밀번호를 입력하세요.") || "";
+    if (!password) return;
+
+    try {
+      await apiJson(`/api/posts/${post.id}`, {
+        method: "DELETE",
+        body: JSON.stringify({
+          viewToken: post.viewToken || "",
+          password,
+        }),
+      });
+    } catch (err) {
+      if (/password/i.test(err.message)) {
+        alert("비밀번호가 올바르지 않습니다.");
+        return;
+      }
+      throw err;
     }
-    throw err;
   }
 
   await refreshPosts();
@@ -256,10 +265,26 @@ async function createComment(form) {
     form.reset();
     await refreshComments(post.id);
     await refreshPosts();
-    setState({ showCommentForm: false });
+    setState({
+      showCommentForm: false,
+      commentDraft: { author: "", content: "" },
+    });
   } catch {
     alert("댓글 등록에 실패했습니다.");
   }
+}
+
+async function deleteComment(commentId) {
+  const post = state.currentPost;
+  if (!post) return;
+  if (!isAdmin()) return;
+  if (!confirm("이 댓글을 삭제할까요?")) return;
+  await apiJson(`/api/posts/${post.id}/comments/${commentId}`, {
+    method: "DELETE",
+    body: JSON.stringify({}),
+  });
+  await refreshComments(post.id);
+  await refreshPosts();
 }
 
 function renderAdminModal() {
@@ -573,11 +598,34 @@ function renderDetailView() {
     h("h3", { class: "panel__title", text: "댓글" }),
     h("div", { class: "field" }, [
       h("label", { text: "이름" }),
-      h("input", { name: "comment-author", placeholder: "이름" }),
+      h("input", {
+        name: "comment-author",
+        placeholder: "이름",
+        value: state.commentDraft.author,
+        onInput: (e) => {
+          state.commentDraft = {
+            ...state.commentDraft,
+            author: e.target.value,
+          };
+        },
+      }),
     ]),
     h("div", { class: "field" }, [
       h("label", { text: "댓글" }),
-      h("textarea", { name: "comment-content", placeholder: "댓글" }),
+      h(
+        "textarea",
+        {
+          name: "comment-content",
+          placeholder: "댓글",
+          onInput: (e) => {
+            state.commentDraft = {
+              ...state.commentDraft,
+              content: e.target.value,
+            };
+          },
+        },
+        [state.commentDraft.content],
+      ),
     ]),
     h("div", { class: "btn-row" }, [
       h("button", { class: "btn", type: "submit", text: "등록" }),
@@ -609,6 +657,16 @@ function renderDetailView() {
                 h("div", { class: "list-item__author", text: formatDate(c.createdAt) }),
               ]),
               h("div", { class: "detail__content", text: c.content }),
+              isAdmin()
+                ? h("div", { class: "btn-row" }, [
+                    h("button", {
+                      class: "btn btn--danger",
+                      type: "button",
+                      text: "댓글 삭제",
+                      onClick: () => deleteComment(c.id).catch(() => alert("삭제에 실패했습니다.")),
+                    }),
+                  ])
+                : "",
             ]),
           ),
         );
@@ -712,7 +770,11 @@ window.addEventListener("popstate", async (event) => {
     }
     try {
       const data = await apiJson(`/api/posts/${st.postId}`);
-      setState({ comments: [], showCommentForm: false });
+      setState({
+        comments: [],
+        showCommentForm: false,
+        commentDraft: { author: "", content: "" },
+      });
       await refreshComments(st.postId);
       setState({ view: "detail", currentPost: data.post, editMode: false });
     } catch {
