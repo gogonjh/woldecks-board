@@ -465,11 +465,7 @@ function renderListView() {
   const allChecked =
     state.posts.length > 0 && state.posts.every((p) => state.selectedIds.has(p.id));
   const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
-  const maxButtons = 5;
-  const startPage = Math.max(1, state.page - Math.floor(maxButtons / 2));
-  const endPage = Math.min(totalPages, startPage + maxButtons - 1);
-  const pages = [];
-  for (let i = startPage; i <= endPage; i += 1) pages.push(i);
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return h("section", { class: "panel" }, [
     h("div", { class: "list-head" }, [
@@ -531,7 +527,6 @@ function renderListView() {
           },
         }),
       ),
-      h("span", { text: `${state.page} / ${totalPages}` }),
       h("button", {
         class: "btn btn--ghost",
         type: "button",
