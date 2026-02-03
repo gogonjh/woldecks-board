@@ -70,7 +70,7 @@ function navigate(view, post = null, replace = false) {
       : view === "detail" && postId
         ? `/post/${postId}`
         : "/";
-  const historyState = { view, postId };
+  const historyState = { view, postId, page: state.page };
   if (replace) history.replaceState(historyState, "", url);
   else history.pushState(historyState, "", url);
 
@@ -84,7 +84,6 @@ function navigate(view, post = null, replace = false) {
 }
 
 function goList(replace = true) {
-  setState({ page: 1 });
   refreshPosts().catch(() => alert("게시글을 불러오지 못했습니다."));
   navigate("list", null, replace);
 }
@@ -466,6 +465,11 @@ function renderListView() {
   const allChecked =
     state.posts.length > 0 && state.posts.every((p) => state.selectedIds.has(p.id));
   const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+  const maxButtons = 5;
+  const startPage = Math.max(1, state.page - Math.floor(maxButtons / 2));
+  const endPage = Math.min(totalPages, startPage + maxButtons - 1);
+  const pages = [];
+  for (let i = startPage; i <= endPage; i += 1) pages.push(i);
 
   return h("section", { class: "panel" }, [
     h("div", { class: "list-head" }, [
@@ -511,8 +515,22 @@ function renderListView() {
           if (state.page <= 1) return;
           setState({ page: state.page - 1 });
           refreshPosts().catch(() => alert("게시글을 불러오지 못했습니다."));
+          navigate("list", null, true);
         },
       }),
+      ...pages.map((p) =>
+        h("button", {
+          class: p === state.page ? "btn" : "btn btn--ghost",
+          type: "button",
+          text: String(p),
+          onClick: () => {
+            if (p === state.page) return;
+            setState({ page: p });
+            refreshPosts().catch(() => alert("게시글을 불러오지 못했습니다."));
+            navigate("list", null, true);
+          },
+        }),
+      ),
       h("span", { text: `${state.page} / ${totalPages}` }),
       h("button", {
         class: "btn btn--ghost",
@@ -523,6 +541,7 @@ function renderListView() {
           if (state.page >= totalPages) return;
           setState({ page: state.page + 1 });
           refreshPosts().catch(() => alert("게시글을 불러오지 못했습니다."));
+          navigate("list", null, true);
         },
       }),
     ]),
@@ -819,6 +838,12 @@ window.addEventListener("popstate", async (event) => {
   }
   if (st.view === "write") {
     setState({ view: "write", currentPost: null, editMode: false });
+    return;
+  }
+  if (st.view === "list") {
+    const page = Number.isFinite(st.page) && st.page > 0 ? st.page : 1;
+    setState({ view: "list", currentPost: null, editMode: false, page });
+    await refreshPosts();
     return;
   }
   setState({ view: "list", currentPost: null, editMode: false });
