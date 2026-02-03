@@ -45,7 +45,7 @@ const state = {
   comments: [],
   commentsError: "",
   showCommentForm: false,
-  commentDraft: { author: "", content: "" },
+  commentDraft: { author: "익명", content: "" },
   page: 1,
   pageSize: 20,
   total: 0,
@@ -79,7 +79,7 @@ function navigate(view, post = null, replace = false) {
     currentPost: typeof post === "object" && post ? post : state.currentPost,
     editMode: false,
     showCommentForm: false,
-    commentDraft: { author: "", content: "" },
+    commentDraft: { author: "익명", content: "" },
   });
 }
 
@@ -122,7 +122,11 @@ async function refreshComments(postId) {
 async function openPost(id) {
   const data = await apiJson(`/api/posts/${id}`);
   navigate("detail", data.post);
-  setState({ comments: [], showCommentForm: false, commentDraft: { author: "", content: "" } });
+  setState({
+    comments: [],
+    showCommentForm: false,
+    commentDraft: { author: "익명", content: "" },
+  });
   await refreshComments(id);
 }
 
@@ -259,23 +263,22 @@ async function deleteCurrentPost() {
 async function createComment(form) {
   const post = state.currentPost;
   if (!post) return;
-  const author = form.querySelector("[name=comment-author]").value.trim();
   const content = form.querySelector("[name=comment-content]").value.trim();
-  if (!author || !content) {
-    alert("이름과 댓글을 입력해 주세요.");
+  if (!content) {
+    alert("댓글을 입력해 주세요.");
     return;
   }
   try {
     await apiJson(`/api/posts/${post.id}/comments`, {
       method: "POST",
-      body: JSON.stringify({ author, content }),
+      body: JSON.stringify({ author: "익명", content }),
     });
     form.reset();
     await refreshComments(post.id);
     await refreshPosts();
     setState({
       showCommentForm: false,
-      commentDraft: { author: "", content: "" },
+      commentDraft: { author: "익명", content: "" },
     });
   } catch {
     alert("댓글 등록에 실패했습니다.");
@@ -646,20 +649,6 @@ function renderDetailView() {
   const commentForm = h("form", {}, [
     h("h3", { class: "panel__title", text: "댓글" }),
     h("div", { class: "field" }, [
-      h("label", { text: "이름" }),
-      h("input", {
-        name: "comment-author",
-        placeholder: "이름",
-        value: state.commentDraft.author,
-        onInput: (e) => {
-          state.commentDraft = {
-            ...state.commentDraft,
-            author: e.target.value,
-          };
-        },
-      }),
-    ]),
-    h("div", { class: "field" }, [
       h("label", { text: "댓글" }),
       h(
         "textarea",
@@ -669,6 +658,7 @@ function renderDetailView() {
           onInput: (e) => {
             state.commentDraft = {
               ...state.commentDraft,
+              author: "익명",
               content: e.target.value,
             };
           },
@@ -822,7 +812,7 @@ window.addEventListener("popstate", async (event) => {
       setState({
         comments: [],
         showCommentForm: false,
-        commentDraft: { author: "", content: "" },
+        commentDraft: { author: "익명", content: "" },
       });
       await refreshComments(st.postId);
       setState({ view: "detail", currentPost: data.post, editMode: false });
