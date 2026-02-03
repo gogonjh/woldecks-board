@@ -43,6 +43,7 @@ const state = {
   posts: [],
   currentPost: null,
   comments: [],
+  commentsError: "",
   view: "list", // list | write | detail
   editMode: false,
   adminLoggedIn: false,
@@ -94,15 +95,23 @@ async function refreshPosts() {
 }
 
 async function refreshComments(postId) {
-  const data = await apiJson(`/api/posts/${postId}/comments`);
-  setState({ comments: data.comments || [] });
+  setState({ commentsError: "" });
+  try {
+    const data = await apiJson(`/api/posts/${postId}/comments`);
+    setState({ comments: data.comments || [], commentsError: "" });
+  } catch (err) {
+    setState({
+      comments: [],
+      commentsError: err?.message || "Failed to load comments.",
+    });
+  }
 }
 
 async function openPost(id) {
   const data = await apiJson(`/api/posts/${id}`);
+  navigate("detail", data.post);
   setState({ comments: [] });
   await refreshComments(id);
-  navigate("detail", data.post);
 }
 
 async function createPost(form) {
@@ -573,8 +582,9 @@ function renderDetailView() {
     createComment(commentForm).catch((err) => alert(err.message));
   });
 
-  const commentList =
-    state.comments.length === 0
+  const commentList = state.commentsError
+    ? h("p", { class: "panel__text", text: state.commentsError })
+    : state.comments.length === 0
       ? h("p", { class: "panel__text", text: "No comments yet." })
       : h(
           "div",
