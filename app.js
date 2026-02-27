@@ -354,9 +354,10 @@ function renderList() {
   }
 
   for (const post of state.posts) {
+    const commentCount = Number(post.commentCount || 0);
     const commentSuffix =
-      typeof post.commentCount === "number" && post.commentCount > 0
-        ? ` [${post.commentCount}]`
+      Number.isFinite(commentCount) && commentCount > 0
+        ? ` [${commentCount}]`
         : "";
     const item = h("div", { class: "list-item" }, [
       isAdmin()

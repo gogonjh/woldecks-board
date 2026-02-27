@@ -306,7 +306,7 @@ export default {
         const cres = await supabaseRequest(env, `comments?${cqs.toString()}`);
         if (cres.ok) {
           const rows = await cres.json();
-          commentCounts = new Map(rows.map((r) => [r.post_id, r.count || 0]));
+          commentCounts = new Map(rows.map((r) => [r.post_id, Number(r.count) || 0]));
         }
       }
       return send(200, {
@@ -316,7 +316,7 @@ export default {
           author: p.author,
           createdAt: p.created_at,
           updatedAt: p.updated_at,
-          commentCount: commentCounts.get(p.id) || 0,
+          commentCount: Number(commentCounts.get(p.id)) || 0,
         })),
         page,
         pageSize,
