@@ -300,13 +300,17 @@ export default {
       if (posts.length > 0) {
         const ids = posts.map((p) => p.id).join(",");
         const cqs = new URLSearchParams({
-          select: "post_id,count:count(post_id)",
+          select: "post_id",
           post_id: `in.(${ids})`,
         });
         const cres = await supabaseRequest(env, `comments?${cqs.toString()}`);
         if (cres.ok) {
           const rows = await cres.json();
-          commentCounts = new Map(rows.map((r) => [r.post_id, Number(r.count) || 0]));
+          commentCounts = new Map();
+          for (const row of rows) {
+            const postId = row.post_id;
+            commentCounts.set(postId, (commentCounts.get(postId) || 0) + 1);
+          }
         }
       }
       return send(200, {
