@@ -356,7 +356,7 @@ function renderList() {
   for (const post of state.posts) {
     const commentSuffix =
       typeof post.commentCount === "number" && post.commentCount > 0
-        ? ` (${post.commentCount})`
+        ? ` [${post.commentCount}]`
         : "";
     const item = h("div", { class: "list-item" }, [
       isAdmin()
