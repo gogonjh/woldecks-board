@@ -1,15 +1,15 @@
 :root {
-  color-scheme: light;
-  --bg: #0b1220;
-  --surface: rgba(255, 255, 255, 0.06);
-  --surface-2: rgba(255, 255, 255, 0.1);
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.68);
-  --border: rgba(255, 255, 255, 0.12);
-  --accent: #7c5cff;
-  --accent-2: #22d3ee;
-  --danger: #ff6b6b;
-  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+  --bg: #050505;
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --text: #f5f5f5;
+  --muted: rgba(255, 255, 255, 0.64);
+  --border: rgba(255, 255, 255, 0.16);
+  --accent: #ffffff;
+  --accent-2: #cfcfcf;
+  --danger: #d9d9d9;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.48);
 }
 
 * {
@@ -34,9 +34,9 @@ body {
     "Apple Color Emoji",
     "Segoe UI Emoji";
   background:
-    radial-gradient(1200px 700px at 20% 10%, rgba(124, 92, 255, 0.35), transparent 55%),
-    radial-gradient(900px 600px at 85% 20%, rgba(34, 211, 238, 0.25), transparent 55%),
-    radial-gradient(1000px 700px at 50% 95%, rgba(124, 92, 255, 0.18), transparent 55%),
+    radial-gradient(1200px 720px at 16% 4%, rgba(255, 255, 255, 0.08), transparent 55%),
+    radial-gradient(960px 640px at 88% 12%, rgba(255, 255, 255, 0.05), transparent 52%),
+    linear-gradient(180deg, #111111 0%, #020202 56%, #000000 100%),
     var(--bg);
   color: var(--text);
 }
@@ -56,7 +56,7 @@ a {
   top: 0;
   z-index: 10;
   backdrop-filter: blur(10px);
-  background: rgba(11, 18, 32, 0.55);
+  background: rgba(0, 0, 0, 0.72);
   border-bottom: 1px solid var(--border);
 }
 
@@ -89,7 +89,7 @@ main.container {
 }
 
 .card {
-  background: rgba(11, 18, 32, 0.78);
+  background: linear-gradient(180deg, rgba(20, 20, 20, 0.92), rgba(6, 6, 6, 0.95));
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: var(--shadow);
@@ -131,7 +131,7 @@ main.container {
 }
 
 .panel {
-  background: rgba(11, 18, 32, 0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 16px;
@@ -166,7 +166,7 @@ label {
 
 input,
 textarea {
-  background: rgba(11, 18, 32, 0.4);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 10px 12px;
@@ -183,8 +183,13 @@ textarea {
 
 input:focus,
 textarea:focus {
-  border-color: rgba(124, 92, 255, 0.45);
-  box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.44);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .btn {
@@ -194,28 +199,34 @@ textarea:focus {
   gap: 8px;
   padding: 9px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(124, 92, 255, 0.5);
-  background: linear-gradient(180deg, rgba(124, 92, 255, 0.35), rgba(124, 92, 255, 0.16));
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
   color: var(--text);
   font-weight: 700;
   cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
 
 .btn:hover {
-  border-color: rgba(34, 211, 238, 0.5);
-  background: linear-gradient(180deg, rgba(34, 211, 238, 0.24), rgba(124, 92, 255, 0.16));
+  border-color: rgba(255, 255, 255, 0.46);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.12));
 }
 
 .btn--ghost {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.02);
   border-color: var(--border);
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text);
 }
 
 .btn--danger {
-  border-color: rgba(255, 107, 107, 0.6);
-  background: linear-gradient(180deg, rgba(255, 107, 107, 0.35), rgba(255, 107, 107, 0.16));
+  border-color: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .btn-row {
@@ -238,7 +249,7 @@ textarea:focus {
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 23, 0.6);
+  background: rgba(0, 0, 0, 0.76);
   display: grid;
   place-items: center;
   z-index: 30;
@@ -247,7 +258,7 @@ textarea:focus {
 
 .modal {
   width: min(560px, 100%);
-  background: rgba(11, 18, 32, 0.95);
+  background: rgba(10, 10, 10, 0.96);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 18px;
@@ -284,7 +295,7 @@ textarea:focus {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
-  background: rgba(11, 18, 32, 0.35);
+  background: rgba(255, 255, 255, 0.02);
   display: grid;
   gap: 6px;
   cursor: pointer;
@@ -292,19 +303,20 @@ textarea:focus {
 }
 
 .list-item:hover {
-  border-color: rgba(124, 92, 255, 0.5);
-  background: rgba(11, 18, 32, 0.5);
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .list-item__title {
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .list-item__check {
   margin-right: 8px;
   width: 16px;
   height: 16px;
-  accent-color: var(--accent-2);
+  accent-color: var(--accent);
 }
 
 .list-item__row {
@@ -358,8 +370,8 @@ textarea:focus {
 }
 
 .tag--admin {
-  border-color: rgba(34, 211, 238, 0.45);
-  color: var(--accent-2);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: var(--text);
 }
 
 .empty {
@@ -375,7 +387,7 @@ textarea:focus {
 
 .footer {
   border-top: 1px solid var(--border);
-  background: rgba(11, 18, 32, 0.55);
+  background: rgba(0, 0, 0, 0.72);
 }
 
 .footer__inner {
@@ -387,8 +399,8 @@ textarea:focus {
   margin-top: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(34, 211, 238, 0.45);
-  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text);
   font-size: 13px;
 }

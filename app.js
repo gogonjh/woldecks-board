@@ -353,7 +353,11 @@ function renderList() {
     return list;
   }
 
-  for (const post of state.posts) {
+  const pageOffset = (state.page - 1) * state.pageSize;
+  const totalCount = state.total > 0 ? state.total : pageOffset + state.posts.length;
+
+  for (const [index, post] of state.posts.entries()) {
+    const postNumber = totalCount - (pageOffset + index);
     const commentCount = Number(post.commentCount || 0);
     const commentSuffix =
       Number.isFinite(commentCount) && commentCount > 0
@@ -368,7 +372,7 @@ function renderList() {
           })
         : "",
       h("div", { class: "list-item__row" }, [
-        h("div", { class: "list-item__title", text: post.title + commentSuffix }),
+        h("div", { class: "list-item__title", text: `${postNumber}. ${post.title}${commentSuffix}` }),
         h("div", { class: "list-item__author", text: post.author }),
       ]),
     ]);
