@@ -373,17 +373,20 @@ function renderList() {
     const displayTitle = post.isNotice
       ? `${titlePrefix}${post.title}${commentSuffix}`
       : `${postNumber}. ${post.title}${commentSuffix}`;
-    const item = h("div", { class: "list-item" }, [
-      isAdmin()
-        ? h("input", {
-            class: "list-item__check",
-            type: "checkbox",
-            "data-id": post.id,
-          })
-        : "",
-      h("div", { class: "list-item__row" }, [
+    const item = h("div", { class: post.isNotice ? "list-item list-item--notice" : "list-item" }, [
+      h("div", { class: isAdmin() ? "list-item__row list-item__row--post" : "list-item__row" }, [
+        isAdmin()
+          ? h("input", {
+              class: "list-item__check",
+              type: "checkbox",
+              "data-id": post.id,
+            })
+          : "",
         h("div", { class: "list-item__title", text: displayTitle }),
-        h("div", { class: "list-item__author", text: post.author }),
+        h("div", { class: "list-item__side" }, [
+          h("span", { class: "list-item__author-label", text: "작성자" }),
+          h("span", { class: "list-item__author", text: post.author }),
+        ]),
       ]),
       post.isNotice
         ? h("div", { class: "list-item__meta" }, [h("span", { class: "tag tag--notice", text: "공지사항" })])
@@ -488,7 +491,7 @@ function renderListView() {
   const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  return h("section", { class: "panel" }, [
+  return h("section", { class: "panel board" }, [
     h("div", { class: "list-head" }, [
       h("div", { class: "list-head__left" }, [
         h("h2", { class: "panel__title", text: "게시글 목록" }),
@@ -522,7 +525,7 @@ function renderListView() {
         : "",
     ]),
     renderList(),
-    h("div", { class: "btn-row" }, [
+    h("div", { class: "pagination" }, [
       h("button", {
         class: "btn btn--ghost",
         type: "button",
