@@ -6,6 +6,7 @@ create table if not exists public.posts (
   title text not null,
   author text not null,
   content text not null,
+  is_notice boolean not null default false,
   pw_salt_hex text not null,
   pw_iterations integer not null,
   pw_digest text not null,
@@ -16,6 +17,10 @@ create table if not exists public.posts (
 );
 
 create index if not exists posts_created_at_idx on public.posts (created_at desc);
+create index if not exists posts_notice_created_at_idx on public.posts (is_notice desc, created_at desc);
+
+alter table public.posts
+add column if not exists is_notice boolean not null default false;
 
 create table if not exists public.comments (
   id uuid primary key default gen_random_uuid(),

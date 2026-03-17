@@ -1,4 +1,6 @@
 const app = document.getElementById("app");
+const adminButton = document.getElementById("adminButton");
+const noticeButton = document.getElementById("noticeButton");
 const API_BASE = (window.API_BASE || "").replace(/\/$/, "");
 const apiUrl = (path) => `${API_BASE}${path}`;
 
@@ -50,6 +52,7 @@ const state = {
   pageSize: 20,
   total: 0,
   view: "list", // list | write | detail
+  writeMode: "post", // post | notice
   editMode: false,
   adminLoggedIn: false,
   showAdminLogin: false,
@@ -62,20 +65,22 @@ function setState(next) {
   render();
 }
 
-function navigate(view, post = null, replace = false) {
+function navigate(view, post = null, replace = false, options = {}) {
   const postId = typeof post === "string" ? post : post?.id || null;
+  const writeMode = options.writeMode || (view === "write" ? state.writeMode : "post");
   const url =
     view === "write"
       ? "/write"
       : view === "detail" && postId
         ? `/post/${postId}`
         : "/";
-  const historyState = { view, postId, page: state.page };
+  const historyState = { view, postId, page: state.page, writeMode };
   if (replace) history.replaceState(historyState, "", url);
   else history.pushState(historyState, "", url);
 
   setState({
     view,
+    writeMode: view === "write" ? writeMode : "post",
     currentPost: typeof post === "object" && post ? post : state.currentPost,
     editMode: false,
     showCommentForm: false,
@@ -135,6 +140,7 @@ async function createPost(form) {
   const author = form.querySelector("[name=author]").value.trim();
   const password = form.querySelector("[name=password]").value;
   const content = form.querySelector("[name=content]").value.trim();
+  const isNotice = state.writeMode === "notice";
 
   form.querySelector(".toast")?.remove();
   if (!title || !author || !password || !content) {
@@ -144,7 +150,7 @@ async function createPost(form) {
 
   await apiJson("/api/posts", {
     method: "POST",
-    body: JSON.stringify({ title, author, password, content }),
+    body: JSON.stringify({ title, author, password, content, isNotice }),
   });
 
   await refreshPosts();
@@ -359,6 +365,7 @@ function renderList() {
   for (const [index, post] of state.posts.entries()) {
     const postNumber = totalCount - (pageOffset + index);
     const commentCount = Number(post.commentCount || 0);
+    const titlePrefix = post.isNotice ? "[공지] " : "";
     const commentSuffix =
       Number.isFinite(commentCount) && commentCount > 0
         ? ` [${commentCount}]`
@@ -372,9 +379,12 @@ function renderList() {
           })
         : "",
       h("div", { class: "list-item__row" }, [
-        h("div", { class: "list-item__title", text: `${postNumber}. ${post.title}${commentSuffix}` }),
+        h("div", { class: "list-item__title", text: `${titlePrefix}${postNumber}. ${post.title}${commentSuffix}` }),
         h("div", { class: "list-item__author", text: post.author }),
       ]),
+      post.isNotice
+        ? h("div", { class: "list-item__meta" }, [h("span", { class: "tag tag--notice", text: "공지사항" })])
+        : "",
     ]);
     if (isAdmin()) {
       const checkbox = item.querySelector(".list-item__check");
@@ -552,6 +562,7 @@ function renderListView() {
 }
 
 function renderWriteView() {
+  const isNotice = state.writeMode === "notice";
   const form = h("form", {}, [
     h("h1", { class: "title", text: "불만 접수 작성" }),
     h("p", {
@@ -584,6 +595,11 @@ function renderWriteView() {
         }),
       ]),
     ]);
+
+  if (isNotice) {
+    form.querySelector(".title").textContent = "공지사항 작성";
+    form.querySelector(".subtitle").textContent = "관리자 공지사항은 게시물 최상단에 고정됩니다.";
+  }
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -757,6 +773,7 @@ function renderDetailView() {
 }
 
 function render() {
+  syncHeaderControls();
   const content =
     state.view === "write"
       ? renderWriteView()
@@ -772,14 +789,18 @@ function render() {
           type: "button",
           text: state.view === "write" ? "목록으로" : "글쓰기",
           onClick: () =>
-            state.view === "write" ? goList(true) : navigate("write"),
+            state.view === "write" ? goList(true) : navigate("write", null, false, { writeMode: "post" }),
         });
 
   app.replaceChildren(h("div", { class: "stack" }, [content, fab, renderAdminModal()]));
 }
 
+function syncHeaderControls() {
+  noticeButton.hidden = !state.adminLoggedIn;
+}
+
 document.getElementById("year").textContent = String(new Date().getFullYear());
-document.getElementById("adminButton").addEventListener("click", async () => {
+adminButton.addEventListener("click", async () => {
   try {
     await refreshAdmin();
     if (state.adminLoggedIn) {
@@ -792,6 +813,11 @@ document.getElementById("adminButton").addEventListener("click", async () => {
   } catch {
     alert("요청에 실패했습니다.");
   }
+});
+
+noticeButton.addEventListener("click", () => {
+  if (!state.adminLoggedIn) return;
+  navigate("write", null, false, { writeMode: "notice" });
 });
 
 Promise.all([refreshAdmin(), refreshPosts()])
@@ -827,7 +853,12 @@ window.addEventListener("popstate", async (event) => {
     return;
   }
   if (st.view === "write") {
-    setState({ view: "write", currentPost: null, editMode: false });
+    setState({
+      view: "write",
+      writeMode: st.writeMode === "notice" ? "notice" : "post",
+      currentPost: null,
+      editMode: false,
+    });
     return;
   }
   if (st.view === "list") {

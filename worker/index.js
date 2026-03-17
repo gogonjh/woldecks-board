@@ -280,8 +280,8 @@ export default {
       const to = from + pageSize - 1;
 
       const qs = new URLSearchParams({
-        select: "id,title,author,created_at,updated_at",
-        order: "created_at.desc",
+        select: "id,title,author,created_at,updated_at,is_notice",
+        order: "is_notice.desc,created_at.desc",
         limit: String(pageSize),
         offset: String(from),
       });
@@ -320,6 +320,7 @@ export default {
           author: p.author,
           createdAt: p.created_at,
           updatedAt: p.updated_at,
+          isNotice: Boolean(p.is_notice),
           commentCount: Number(commentCounts.get(p.id)) || 0,
         })),
         page,
@@ -335,8 +336,13 @@ export default {
       const author = typeof body.author === "string" ? body.author.trim() : "";
       const content = typeof body.content === "string" ? body.content.trim() : "";
       const password = typeof body.password === "string" ? body.password : "";
+      const requestedNotice = body.isNotice === true;
       if (!title || !author || !content || !password) {
         return send(400, { error: "Missing fields" });
+      }
+      const isAdminUser = await isAdmin(request, env);
+      if (requestedNotice && !isAdminUser) {
+        return send(401, { error: "Unauthorized" });
       }
 
       const passwordRecord = await makePasswordRecord(password);
@@ -344,6 +350,7 @@ export default {
         title,
         author,
         content,
+        is_notice: requestedNotice && isAdminUser,
         ...passwordRecord,
       };
       const res = await supabaseRequest(env, "posts", {
@@ -363,7 +370,7 @@ export default {
     if (postMatch && request.method === "GET") {
       const id = postMatch[1];
       const qs = new URLSearchParams({
-        select: "id,title,author,content,created_at,updated_at",
+        select: "id,title,author,content,created_at,updated_at,is_notice",
         id: `eq.${id}`,
         limit: "1",
       });
@@ -383,6 +390,7 @@ export default {
           content: post.content,
           createdAt: post.created_at,
           updatedAt: post.updated_at,
+          isNotice: Boolean(post.is_notice),
         },
       });
     }
@@ -457,7 +465,7 @@ export default {
       if (await isAdmin(request, env)) {
         const id = viewMatch[1];
         const qs = new URLSearchParams({
-          select: "id,title,author,content,created_at,updated_at",
+          select: "id,title,author,content,created_at,updated_at,is_notice",
           id: `eq.${id}`,
           limit: "1",
         });
@@ -477,6 +485,7 @@ export default {
             content: post.content,
             createdAt: post.created_at,
             updatedAt: post.updated_at,
+            isNotice: Boolean(post.is_notice),
           },
         });
       }
@@ -487,7 +496,7 @@ export default {
 
       const id = viewMatch[1];
       const qs = new URLSearchParams({
-        select: "id,title,author,content,created_at,updated_at,pw_salt_hex,pw_iterations,pw_digest,pw_keylen,pw_hash_hex",
+        select: "id,title,author,content,created_at,updated_at,is_notice,pw_salt_hex,pw_iterations,pw_digest,pw_keylen,pw_hash_hex",
         id: `eq.${id}`,
         limit: "1",
       });
@@ -527,6 +536,7 @@ export default {
           content: post.content,
           createdAt: post.created_at,
           updatedAt: post.updated_at,
+          isNotice: Boolean(post.is_notice),
         },
         viewToken: `${tokenData.token}.${tokenData.salt}`,
       });

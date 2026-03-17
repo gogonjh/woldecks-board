@@ -68,6 +68,12 @@ a {
   gap: 12px;
 }
 
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .brand {
   display: grid;
   gap: 4px;
@@ -98,6 +104,10 @@ main.container {
 }
 
 .header__admin {
+  white-space: nowrap;
+}
+
+.header__notice {
   white-space: nowrap;
 }
 
@@ -242,7 +252,8 @@ textarea::placeholder {
   bottom: 22px;
   z-index: 20;
   border-radius: 999px;
-  padding: 12px 18px;
+  padding: 17px 28px;
+  font-size: 15px;
   box-shadow: var(--shadow);
 }
 
@@ -374,6 +385,12 @@ textarea::placeholder {
   color: var(--text);
 }
 
+.tag--notice {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
 .empty {
   color: var(--muted);
   font-size: 13px;
@@ -403,4 +420,8 @@ textarea::placeholder {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
   font-size: 13px;
+}
+
+[hidden] {
+  display: none !important;
 }

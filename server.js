@@ -294,13 +294,18 @@ function route(req, res) {
   if (pathname === "/api/posts" && req.method === "GET") {
     const data = readData();
     const posts = [...data.posts]
-      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+      .sort((a, b) => {
+        const noticeDiff = Number(Boolean(b.isNotice)) - Number(Boolean(a.isNotice));
+        if (noticeDiff !== 0) return noticeDiff;
+        return a.createdAt < b.createdAt ? 1 : -1;
+      })
       .map((p) => ({
         id: p.id,
         title: p.title,
         author: p.author,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt || null,
+        isNotice: Boolean(p.isNotice),
       }));
     return json(res, 200, { posts });
   }
@@ -313,8 +318,12 @@ function route(req, res) {
       const author = typeof body.author === "string" ? body.author.trim() : "";
       const content = typeof body.content === "string" ? body.content.trim() : "";
       const password = typeof body.password === "string" ? body.password : "";
+      const requestedNotice = body.isNotice === true;
       if (!title || !author || !content || !password) {
         return badRequest(res, "Missing fields");
+      }
+      if (requestedNotice && !isAdmin(req)) {
+        return unauthorized(res, "Admin only");
       }
 
       const data = readData();
@@ -323,6 +332,7 @@ function route(req, res) {
         title,
         author,
         content,
+        isNotice: requestedNotice && isAdmin(req),
         password: makePasswordRecord(password),
         createdAt: nowIso(),
         updatedAt: null,
@@ -348,6 +358,7 @@ function route(req, res) {
         content: post.content,
         createdAt: post.createdAt,
         updatedAt: post.updatedAt || null,
+        isNotice: Boolean(post.isNotice),
       },
     });
   }
@@ -383,6 +394,7 @@ function route(req, res) {
           content: post.content,
           createdAt: post.createdAt,
           updatedAt: post.updatedAt || null,
+          isNotice: Boolean(post.isNotice),
         },
         viewToken,
       });
