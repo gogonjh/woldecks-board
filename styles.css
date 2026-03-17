@@ -57,11 +57,11 @@ a {
 }
 
 .header__inner {
-  padding: 16px 0 14px;
+  padding: 10px 0 9px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px;
 }
 
 .header__actions {
@@ -72,19 +72,20 @@ a {
 
 .brand {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .brand__title {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .brand__subtitle {
   color: var(--muted);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 main.container {
@@ -190,7 +191,7 @@ textarea::placeholder {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.06);
@@ -462,6 +463,7 @@ textarea::placeholder {
   .header__inner {
     align-items: stretch;
     flex-direction: column;
+    padding: 10px 0 8px;
   }
 
   .header__actions {
