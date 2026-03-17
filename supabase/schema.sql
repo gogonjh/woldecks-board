@@ -16,11 +16,11 @@ create table if not exists public.posts (
   updated_at timestamptz null
 );
 
-create index if not exists posts_created_at_idx on public.posts (created_at desc);
-create index if not exists posts_notice_created_at_idx on public.posts (is_notice desc, created_at desc);
-
 alter table public.posts
 add column if not exists is_notice boolean not null default false;
+
+create index if not exists posts_created_at_idx on public.posts (created_at desc);
+create index if not exists posts_notice_created_at_idx on public.posts (is_notice desc, created_at desc);
 
 create table if not exists public.comments (
   id uuid primary key default gen_random_uuid(),
