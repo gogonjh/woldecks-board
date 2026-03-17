@@ -370,6 +370,9 @@ function renderList() {
       Number.isFinite(commentCount) && commentCount > 0
         ? ` [${commentCount}]`
         : "";
+    const displayTitle = post.isNotice
+      ? `${titlePrefix}${post.title}${commentSuffix}`
+      : `${postNumber}. ${post.title}${commentSuffix}`;
     const item = h("div", { class: "list-item" }, [
       isAdmin()
         ? h("input", {
@@ -379,7 +382,7 @@ function renderList() {
           })
         : "",
       h("div", { class: "list-item__row" }, [
-        h("div", { class: "list-item__title", text: `${titlePrefix}${postNumber}. ${post.title}${commentSuffix}` }),
+        h("div", { class: "list-item__title", text: displayTitle }),
         h("div", { class: "list-item__author", text: post.author }),
       ]),
       post.isNotice
