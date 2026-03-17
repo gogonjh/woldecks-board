@@ -330,15 +330,16 @@ textarea::placeholder {
 }
 
 .list-item__side {
-  display: grid;
-  gap: 3px;
-  justify-items: end;
-  min-width: 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: fit-content;
 }
 
 .list-item__author-label {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.02em;
 }
 
@@ -497,9 +498,8 @@ textarea::placeholder {
   }
 
   .list-item__side {
-    justify-items: start;
-    grid-auto-flow: column;
-    gap: 6px;
+    justify-content: flex-start;
+    gap: 4px;
     min-width: 0;
   }
 

@@ -384,7 +384,7 @@ function renderList() {
           : "",
         h("div", { class: "list-item__title", text: displayTitle }),
         h("div", { class: "list-item__side" }, [
-          h("span", { class: "list-item__author-label", text: "작성자" }),
+          h("span", { class: "list-item__author-label", text: "작성자:" }),
           h("span", { class: "list-item__author", text: post.author }),
         ]),
       ]),
