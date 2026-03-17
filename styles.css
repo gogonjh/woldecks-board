@@ -48,10 +48,7 @@ a {
 }
 
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(8px);
+  position: static;
   background: rgba(17, 19, 21, 0.88);
   border-bottom: 1px solid var(--border);
 }
