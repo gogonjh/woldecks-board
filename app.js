@@ -24,6 +24,18 @@ function formatDate(date) {
   return d.toLocaleString("ko-KR", { hour12: false });
 }
 
+function formatListDate(date) {
+  if (!date) return "";
+  const d = new Date(date);
+  return d.toLocaleString("ko-KR", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 async function apiJson(url, options = {}) {
   const res = await fetch(apiUrl(url), {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -355,7 +367,15 @@ function renderAdminModal() {
 function renderList() {
   const list = h("div", { class: "list" });
   if (state.posts.length === 0) {
-    list.append(h("p", { class: "empty", text: "아직 등록된 게시물이 없습니다." }));
+    list.append(
+      h("div", { class: "empty" }, [
+        h("strong", { class: "empty__title", text: "아직 등록된 게시물이 없습니다." }),
+        h("p", {
+          class: "empty__text",
+          text: "첫 글을 남기면 이 공간에 최신 게시물이 표시됩니다.",
+        }),
+      ]),
+    );
     return list;
   }
 
@@ -365,14 +385,6 @@ function renderList() {
   for (const [index, post] of state.posts.entries()) {
     const postNumber = totalCount - (pageOffset + index);
     const commentCount = Number(post.commentCount || 0);
-    const titlePrefix = post.isNotice ? "[공지] " : "";
-    const commentSuffix =
-      Number.isFinite(commentCount) && commentCount > 0
-        ? ` [${commentCount}]`
-        : "";
-    const displayTitle = post.isNotice
-      ? `${titlePrefix}${post.title}${commentSuffix}`
-      : `${postNumber}. ${post.title}${commentSuffix}`;
     const item = h("div", { class: post.isNotice ? "list-item list-item--notice" : "list-item" }, [
       h("div", { class: isAdmin() ? "list-item__row list-item__row--post" : "list-item__row" }, [
         isAdmin()
@@ -382,15 +394,25 @@ function renderList() {
               "data-id": post.id,
             })
           : "",
-        h("div", { class: "list-item__title", text: displayTitle }),
+        h("div", { class: "list-item__body" }, [
+          h("div", { class: "list-item__meta" }, [
+            post.isNotice ? h("span", { class: "tag tag--notice", text: "공지" }) : "",
+            !post.isNotice ? h("span", { class: "list-item__number", text: String(postNumber) }) : "",
+            h("span", { text: `작성 ${post.author}` }),
+            h("span", { text: formatListDate(post.updatedAt || post.createdAt) }),
+            post.updatedAt ? h("span", { class: "tag", text: "수정됨" }) : "",
+          ]),
+          h("div", { class: "list-item__title-row" }, [
+            h("div", { class: "list-item__title", text: post.title }),
+            Number.isFinite(commentCount) && commentCount > 0
+              ? h("span", { class: "list-item__count", text: `댓글 ${commentCount}` })
+              : "",
+          ]),
+        ]),
         h("div", { class: "list-item__side" }, [
-          h("span", { class: "list-item__author-label", text: "작성자:" }),
-          h("span", { class: "list-item__author", text: post.author }),
+          h("span", { class: "list-item__side-text", text: "열기" }),
         ]),
       ]),
-      post.isNotice
-        ? h("div", { class: "list-item__meta" }, [h("span", { class: "tag tag--notice", text: "공지사항" })])
-        : "",
     ]);
     if (isAdmin()) {
       const checkbox = item.querySelector(".list-item__check");
@@ -490,11 +512,19 @@ function renderListView() {
     state.posts.length > 0 && state.posts.every((p) => state.selectedIds.has(p.id));
   const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const summary = [
+    h("span", { class: "summary-pill", text: `전체 ${state.total}건` }),
+    h("span", { class: "summary-pill", text: `${state.page} / ${totalPages} 페이지` }),
+  ];
+
+  if (isAdmin()) {
+    summary.push(h("span", { class: "summary-pill summary-pill--admin", text: "관리 모드" }));
+  }
 
   return h("section", { class: "panel board" }, [
     h("div", { class: "list-head" }, [
-      h("div", { class: "list-head__left" }, [
-        h("h2", { class: "panel__title", text: "게시글 목록" }),
+      h("div", { class: "list-head__meta" }, [
+        h("div", { class: "summary-row" }, summary),
         isAdmin()
           ? h("label", { class: "list-head__check" }, [
               h("input", {
@@ -506,23 +536,24 @@ function renderListView() {
             ])
           : "",
       ]),
-      isAdmin()
-        ? h("button", {
-            class: "btn btn--ghost",
-            type: "button",
-            text: "CSV 내보내기",
-            onClick: () => exportSelectedPosts().catch(() => alert("내보내기에 실패했습니다.")),
-          })
-        : "",
-
-      isAdmin()
-        ? h("button", {
-            class: "btn btn--danger",
-            type: "button",
-            text: "선택 삭제",
-            onClick: () => deleteSelectedPosts().catch(() => alert("삭제에 실패했습니다.")),
-          })
-        : "",
+      h("div", { class: "list-head__actions" }, [
+        isAdmin()
+          ? h("button", {
+              class: "btn btn--ghost",
+              type: "button",
+              text: "CSV 내보내기",
+              onClick: () => exportSelectedPosts().catch(() => alert("내보내기에 실패했습니다.")),
+            })
+          : "",
+        isAdmin()
+          ? h("button", {
+              class: "btn btn--danger",
+              type: "button",
+              text: "선택 삭제",
+              onClick: () => deleteSelectedPosts().catch(() => alert("삭제에 실패했습니다.")),
+            })
+          : "",
+      ]),
     ]),
     renderList(),
     h("div", { class: "pagination" }, [
@@ -748,14 +779,17 @@ function renderDetailView() {
   ]);
 
   return h("section", { class: "panel" }, [
-    h("h1", { class: "title", text: post.title }),
-    h("p", {
-      class: "panel__text",
-      text: `작성자: ${post.author} / 작성일: ${formatDate(post.createdAt)}`,
-    }),
-    post.updatedAt
-      ? h("p", { class: "panel__text", text: `수정일: ${formatDate(post.updatedAt)}` })
-      : "",
+    h("div", { class: "detail-header" }, [
+      h("div", { class: "detail-header__meta" }, [
+        post.isNotice ? h("span", { class: "tag tag--notice", text: "공지" }) : "",
+        h("span", { class: "summary-pill", text: `작성자 ${post.author}` }),
+        h("span", { class: "summary-pill", text: `작성일 ${formatDate(post.createdAt)}` }),
+        post.updatedAt
+          ? h("span", { class: "summary-pill", text: `수정일 ${formatDate(post.updatedAt)}` })
+          : "",
+      ]),
+      h("h1", { class: "title detail-header__title", text: post.title }),
+    ]),
     h("div", { class: "detail__content", text: post.content }),
     h("div", { class: "btn-row" }, [
       h("button", {
@@ -771,6 +805,11 @@ function renderDetailView() {
         text: "삭제",
         onClick: () => deleteCurrentPost().catch(() => alert("삭제에 실패했습니다.")),
       }),
+    ]),
+    h("div", { class: "section-divider" }),
+    h("div", { class: "comments-header" }, [
+      h("h2", { class: "panel__title", text: "댓글" }),
+      h("span", { class: "summary-pill", text: `${state.comments.length}개` }),
     ]),
     commentToggle,
     state.showCommentForm ? commentForm : "",
