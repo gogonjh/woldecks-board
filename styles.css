@@ -395,7 +395,8 @@ textarea::placeholder {
   border-bottom: 1px solid var(--border);
 }
 
-.list-head__left {
+.list-head__left,
+.list-head__meta {
   display: grid;
   gap: 8px;
   min-width: 0;
@@ -492,21 +493,6 @@ textarea::placeholder {
   line-height: 1.6;
 }
 
-.board-hero {
-  display: grid;
-  gap: 14px;
-  padding: 2px 0 18px;
-}
-
-.board-hero__title {
-  margin-bottom: 6px;
-}
-
-.board-hero__text {
-  margin-bottom: 0;
-  max-width: 52ch;
-}
-
 .detail__content {
   white-space: pre-wrap;
   line-height: 1.72;
@@ -564,7 +550,7 @@ textarea::placeholder {
 }
 
 .board {
-  padding-top: 16px;
+  padding-top: 8px;
 }
 
 .pagination {

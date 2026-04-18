@@ -522,19 +522,9 @@ function renderListView() {
   }
 
   return h("section", { class: "panel board" }, [
-    h("div", { class: "board-hero" }, [
-      h("div", { class: "board-hero__copy" }, [
-        h("h1", { class: "title board-hero__title", text: "월덱스 게시판" }),
-        h("p", {
-          class: "subtitle board-hero__text",
-          text: "최신 글과 공지를 한 번에 확인하고, 익명 댓글로 빠르게 의견을 남길 수 있습니다.",
-        }),
-      ]),
-      h("div", { class: "summary-row" }, summary),
-    ]),
     h("div", { class: "list-head" }, [
-      h("div", { class: "list-head__left" }, [
-        h("h2", { class: "panel__title", text: "게시글 목록" }),
+      h("div", { class: "list-head__meta" }, [
+        h("div", { class: "summary-row" }, summary),
         isAdmin()
           ? h("label", { class: "list-head__check" }, [
               h("input", {
