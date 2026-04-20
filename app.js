@@ -409,9 +409,6 @@ function renderList() {
               : "",
           ]),
         ]),
-        h("div", { class: "list-item__side" }, [
-          h("span", { class: "list-item__side-text", text: "열기" }),
-        ]),
       ]),
     ]);
     if (isAdmin()) {

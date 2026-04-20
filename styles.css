@@ -345,22 +345,7 @@ textarea::placeholder {
 }
 
 .list-item__row--post {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-}
-
-.list-item__side {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  min-width: fit-content;
-}
-
-.list-item__side-text {
-  color: var(--accent-2);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
 .list-item__author {
@@ -602,19 +587,9 @@ textarea::placeholder {
     grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .list-item__row--post .list-item__side {
-    grid-column: 2;
-  }
-
   .list-item__title-row {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .list-item__side {
-    justify-content: flex-start;
-    gap: 4px;
-    min-width: 0;
   }
 
   .list-head__actions {
